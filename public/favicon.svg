@@ -1,0 +1,36 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="favicon_gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop stopColor="#00D4FF"/>
+      <stop offset="0.5" stopColor="#0099CC"/>
+      <stop offset="1" stopColor="#0066FF"/>
+    </linearGradient>
+    <linearGradient id="favicon_accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop stopColor="#FF6B35"/>
+      <stop offset="1" stopColor="#F7931E"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="white" stroke="url(#favicon_gradient)" stroke-width="2"/>
+  
+  <!-- Main C curve -->
+  <path d="M48 19.4C37.8 8.8 16.5 8.8 16.5 30.1C16.5 51.4 37.8 51.4 48 40.8" 
+        fill="none" 
+        stroke="url(#favicon_gradient)" 
+        stroke-width="4" 
+        stroke-linecap="round"/>
+  
+  <!-- Accent curves -->
+  <path d="M53.8 24.6C48 19.4 43.1 19.4 37.8 24.6" 
+        fill="none" 
+        stroke="url(#favicon_accent)" 
+        stroke-width="2.5" 
+        stroke-linecap="round"/>
+  
+  <path d="M53.8 35.4C48 40.8 43.1 40.8 37.8 35.4" 
+        fill="none" 
+        stroke="url(#favicon_accent)" 
+        stroke-width="2.5" 
+        stroke-linecap="round"/>
+</svg>

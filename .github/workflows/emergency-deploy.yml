@@ -1,0 +1,127 @@
+name: Emergency Direct Deploy (Webhook Bypass)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+        - both
+
+env:
+  NODE_VERSION: '20'
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  emergency-deploy:
+    name: Emergency Deploy (Direct)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Create deployment package
+      run: |
+        echo "📦 Creating deployment package..."
+        # Create a clean directory structure
+        mkdir -p deployment-package
+        cp -r . deployment-package/ 2>/dev/null || true
+        cd deployment-package
+        rm -rf node_modules .git .next clyvanta-deploy.tar.gz deployment-package 2>/dev/null || true
+        cd ..
+        tar -czf clyvanta-deploy.tar.gz -C deployment-package .
+        rm -rf deployment-package
+        echo "✅ Deployment package created: $(ls -lh clyvanta-deploy.tar.gz)"
+        
+    - name: Emergency Deploy via SSH
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SERVER_HOST: ${{ secrets.DROPLET_IP }}
+      run: |
+        echo "🚨 Emergency deployment - bypassing webhook service"
+        
+        # Setup SSH
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+        
+        # Upload deployment package
+        scp clyvanta-deploy.tar.gz root@$SERVER_HOST:/tmp/
+        
+        # Execute deployment on server
+        ssh root@$SERVER_HOST << 'EOF'
+          echo "🚀 Starting emergency deployment..."
+          
+          # Create backup
+          if [ -d "/var/www/clyvanta" ]; then
+            cp -r /var/www/clyvanta /var/www/clyvanta-backup-$(date +%Y%m%d-%H%M%S)
+          fi
+          
+          # Extract new code
+          mkdir -p /var/www/clyvanta
+          cd /var/www/clyvanta
+          tar -xzf /tmp/clyvanta-deploy.tar.gz
+          
+          # Restart webhook service first
+          echo "🔧 Attempting to restart webhook service..."
+          chmod +x restart-webhook-service.sh
+          ./restart-webhook-service.sh || echo "Webhook restart failed, continuing with deployment..."
+          
+          # Deploy based on environment
+          if [[ "${{ github.event.inputs.environment }}" == "staging" || "${{ github.event.inputs.environment }}" == "both" ]]; then
+            echo "🚀 Deploying to staging..."
+            docker-compose -f docker-compose.staging.yml down || true
+            docker-compose -f docker-compose.staging.yml up -d --build
+          fi
+          
+          if [[ "${{ github.event.inputs.environment }}" == "production" || "${{ github.event.inputs.environment }}" == "both" ]]; then
+            echo "🚀 Deploying to production..."
+            docker-compose down || true
+            docker-compose up -d --build
+          fi
+          
+          # Test deployments
+          sleep 30
+          if [[ "${{ github.event.inputs.environment }}" == "staging" || "${{ github.event.inputs.environment }}" == "both" ]]; then
+            curl -f http://localhost:8081 && echo "✅ Staging deployed successfully"
+          fi
+          if [[ "${{ github.event.inputs.environment }}" == "production" || "${{ github.event.inputs.environment }}" == "both" ]]; then
+            curl -f http://localhost:8080 && echo "✅ Production deployed successfully"
+          fi
+          
+          # Test webhook service
+          curl -f http://localhost:4040/health && echo "✅ Webhook service restored"
+          
+          echo "🎉 Emergency deployment completed!"
+        EOF
+        
+    - name: Verify Deployment
+      run: |
+        echo "🔍 Verifying deployment..."
+        if [[ "${{ github.event.inputs.environment }}" == "staging" || "${{ github.event.inputs.environment }}" == "both" ]]; then
+          curl -f http://${{ secrets.DROPLET_IP }}:8081 && echo "✅ Staging is live"
+        fi
+        if [[ "${{ github.event.inputs.environment }}" == "production" || "${{ github.event.inputs.environment }}" == "both" ]]; then
+          curl -f http://${{ secrets.DROPLET_IP }}:8080 && echo "✅ Production is live"
+        fi
+        curl -f http://${{ secrets.DROPLET_IP }}:4040/health && echo "✅ Webhook service is working"

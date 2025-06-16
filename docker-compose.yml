@@ -1,0 +1,58 @@
+
+services:
+  clyvanta-web:
+    build: .
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://clyvanta_user:clyvanta_pass@clyvanta-postgres:5432/clyvanta_db
+    restart: unless-stopped
+    container_name: clyvanta-website
+    depends_on:
+      - clyvanta-postgres
+    networks:
+      - clyvanta-network
+
+  clyvanta-nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./nginx.simple.conf:/etc/nginx/nginx.conf:ro
+      # SSL volumes (for future use)
+      - ssl-certs:/etc/letsencrypt:ro
+      - certbot-webroot:/var/www/certbot:ro
+    restart: unless-stopped
+    container_name: clyvanta-nginx
+    depends_on:
+      - clyvanta-web
+    networks:
+      - clyvanta-network
+
+  clyvanta-postgres:
+    image: postgres:15-alpine
+    container_name: clyvanta-postgres
+    environment:
+      - POSTGRES_DB=clyvanta_db
+      - POSTGRES_USER=clyvanta_user
+      - POSTGRES_PASSWORD=clyvanta_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - clyvanta-network
+
+volumes:
+  postgres_data:
+  ssl-certs:
+  certbot-webroot:
+
+networks:
+  clyvanta-network:
+    driver: bridge

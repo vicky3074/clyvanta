@@ -1,0 +1,32 @@
+FROM node:20-alpine
+
+# Install dependencies needed for Docker and git
+RUN apk add --no-cache \
+    docker-cli \
+    docker-cli-compose \
+    git \
+    curl \
+    bash
+
+# Create app directory
+WORKDIR /app
+
+# Copy webhook package.json and install dependencies
+COPY webhook-package.json package.json
+RUN npm ci --only=production
+
+# Copy webhook application
+COPY deploy-webhook.js .
+
+# Create non-root user
+RUN addgroup -g 1001 -S webhook && \
+    adduser -S webhook -u 1001
+
+# Give webhook user access to docker socket (will be mounted)
+RUN addgroup webhook docker
+
+USER webhook
+
+EXPOSE 4040
+
+CMD ["node", "deploy-webhook.js"]
