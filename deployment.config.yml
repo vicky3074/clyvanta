@@ -1,0 +1,81 @@
+# 🚀 Clyvanta Deployment Configuration
+# This file defines deployment settings and parameters
+
+deployment:
+  name: "Clyvanta Production"
+  version: "1.0.0"
+  
+  # Environment Configuration
+  environments:
+    production:
+      domain: "clyvanta.com"
+      ssl_enabled: true
+      health_check_endpoint: "/health"
+      timeout: 300 # seconds
+      
+    staging:
+      domain: "staging.clyvanta.com"
+      ssl_enabled: true
+      health_check_endpoint: "/health"
+      timeout: 180
+      
+  # Deployment Strategy
+  strategy:
+    type: "blue-green"
+    rollback_enabled: true
+    health_check_retries: 10
+    health_check_interval: 15 # seconds
+    
+  # Container Configuration
+  containers:
+    app:
+      name: "clyvanta-website"
+      port: 3000
+      health_check: "/"
+      
+    nginx:
+      name: "clyvanta-nginx"
+      ports: [80, 443, 8080]
+      
+    database:
+      name: "clyvanta-postgres"
+      port: 5432
+      backup_enabled: true
+      
+  # Backup Configuration
+  backup:
+    enabled: true
+    retention_days: 30
+    max_backups: 5
+    
+  # Monitoring Configuration
+  monitoring:
+    health_checks:
+      - endpoint: "/"
+        expected_status: 200
+        expected_content: "Great Ideas Deserve Great Technology"
+        
+      - endpoint: "/health"
+        expected_status: 200
+        
+    alerts:
+      - type: "deployment_failure"
+        enabled: true
+        
+      - type: "health_check_failure"
+        enabled: true
+        threshold: 3
+        
+  # Security Configuration
+  security:
+    ssl_certificate:
+      type: "cloudflare"
+      auto_renew: true
+      
+    vulnerability_scanning:
+      enabled: true
+      fail_on_high: false # warn only for now
+      
+    dependency_scanning:
+      enabled: true
+      fail_on_high: false # warn only for now

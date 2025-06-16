@@ -3,6 +3,8 @@
 const express = require('express');
 const { exec } = require('child_process');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
@@ -10,7 +12,9 @@ app.use(express.json());
 // Configuration
 const DEPLOY_TOKEN = 'clyvanta-deploy-2025';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'clyvanta-webhook-secret';
-const APP_DIR = '/var/www/clyvanta';
+const APP_DIR = '/home/ubuntu';
+const REPO_URL = 'https://github.com/vicky3074/clyvanta.git';
+const PORT = process.env.PORT || 4040;
 
 // Verify GitHub webhook signature
 function verifySignature(payload, signature) {
@@ -80,24 +84,166 @@ app.post('/webhook', (req, res) => {
   }
 });
 
-// Deployment function
+// Blue-Green Deployment function
 function triggerDeployment(type, branch = 'main') {
-  const environment = 'production';
+  const deploymentId = `webhook-${Date.now()}`;
   
-  console.log(`📦 Starting production deployment...`);
+  console.log(`🚀 Starting Blue-Green deployment [${deploymentId}]`);
+  console.log(`📊 Type: ${type}, Branch: ${branch}`);
   
-  // Direct deployment command
-  const deployCommand = `cd ${APP_DIR} && git fetch origin && git reset --hard origin/main && docker-compose down && docker-compose up -d --build`;
+  // Create comprehensive deployment script
+  const deploymentScript = `
+    set -e
+    echo "💾 Creating deployment backup..."
+    
+    # Create backup directory with timestamp
+    BACKUP_DIR="${APP_DIR}/backups/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$BACKUP_DIR"
+    
+    # Backup current deployment
+    if [ -d "${APP_DIR}/clyvanta-new" ]; then
+      cp -r ${APP_DIR}/clyvanta-new "$BACKUP_DIR/"
+      echo "✅ Backup created at: $BACKUP_DIR"
+    else
+      echo "ℹ️ No existing deployment to backup"
+    fi
+    
+    # Keep only last 5 backups
+    ls -t ${APP_DIR}/backups/ | tail -n +6 | xargs -I {} rm -rf ${APP_DIR}/backups/{}
+    
+    echo "📦 Preparing Green environment..."
+    
+    # Remove old green deployment if exists
+    rm -rf ${APP_DIR}/clyvanta-green || true
+    
+    # Pull fresh code to green environment
+    git clone ${REPO_URL} ${APP_DIR}/clyvanta-green
+    cd ${APP_DIR}/clyvanta-green
+    
+    echo "🔐 Generating SSL certificates..."
+    mkdir -p ssl
+    openssl genrsa -out ssl/key.pem 2048
+    openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 \\
+      -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
+    
+    echo "🏗️ Building green environment..."
+    docker compose build
+    
+    echo "🛑 Stopping Blue environment (current production)..."
+    docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true
+    docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true
+    
+    echo "🟢 Starting Green environment (new production)..."
+    docker compose up -d
+    
+    echo "⏳ Waiting for services to start..."
+    sleep 30
+    
+    echo "🏥 Running health checks..."
+    for i in {1..5}; do
+      if curl -f -s --max-time 10 "http://localhost:8080" > /dev/null; then
+        echo "✅ Health check passed on attempt $i"
+        break
+      else
+        echo "⏳ Health check attempt $i/5 failed, retrying..."
+        sleep 10
+      fi
+      
+      if [ $i -eq 5 ]; then
+        echo "❌ Health checks failed - initiating rollback"
+        exit 1
+      fi
+    done
+    
+    echo "🧹 Post-deployment cleanup..."
+    # Move current green to blue (for next deployment)
+    rm -rf ${APP_DIR}/clyvanta-new || true
+    mv ${APP_DIR}/clyvanta-green ${APP_DIR}/clyvanta-new
+    
+    echo "🐳 Cleaning up Docker resources..."
+    docker system prune -f || true
+    
+    echo "✅ Blue-Green deployment completed successfully!"
+  `;
 
-  exec(deployCommand, (error, stdout, stderr) => {
+  exec(deploymentScript, { 
+    cwd: APP_DIR,
+    timeout: 600000, // 10 minutes timeout
+    maxBuffer: 1024 * 1024 * 10 // 10MB buffer
+  }, (error, stdout, stderr) => {
     if (error) {
-      console.error(`❌ Production deployment failed:`, error);
+      console.error(`❌ Deployment [${deploymentId}] failed:`, error.message);
       console.error('stderr:', stderr);
+      
+      // Attempt rollback
+      console.log('🔄 Attempting automatic rollback...');
+      attemptRollback();
     } else {
-      console.log(`✅ Production deployment successful`);
+      console.log(`✅ Deployment [${deploymentId}] completed successfully`);
+      console.log('stdout:', stdout);
+      
+      // Verify deployment
+      verifyDeployment(deploymentId);
     }
-    console.log('stdout:', stdout);
-    if (stderr) console.error('stderr:', stderr);
+  });
+}
+
+// Rollback function
+function attemptRollback() {
+  console.log('🚨 Initiating emergency rollback...');
+  
+  const rollbackScript = `
+    set -e
+    echo "🔄 Rolling back to previous version..."
+    
+    # Find latest backup
+    LATEST_BACKUP=$(ls -t ${APP_DIR}/backups/ | head -n 1)
+    
+    if [ -n "$LATEST_BACKUP" ]; then
+      echo "📦 Rolling back to: $LATEST_BACKUP"
+      
+      # Stop current containers
+      docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true
+      docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true
+      
+      # Restore from backup
+      rm -rf ${APP_DIR}/clyvanta-new || true
+      cp -r "${APP_DIR}/backups/$LATEST_BACKUP/clyvanta-new" ${APP_DIR}/ || true
+      
+      # Start restored version
+      cd ${APP_DIR}/clyvanta-new
+      docker compose up -d
+      
+      echo "✅ Rollback completed"
+    else
+      echo "❌ No backup found for rollback"
+      exit 1
+    fi
+  `;
+  
+  exec(rollbackScript, (error, stdout, stderr) => {
+    if (error) {
+      console.error('❌ Rollback failed:', error.message);
+    } else {
+      console.log('✅ Rollback completed successfully');
+    }
+    console.log('Rollback output:', stdout);
+  });
+}
+
+// Deployment verification
+function verifyDeployment(deploymentId) {
+  console.log(`🔍 Verifying deployment [${deploymentId}]...`);
+  
+  // Test HTTP endpoint
+  exec('curl -f -s --max-time 10 "http://localhost:8080"', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`❌ Deployment verification failed for [${deploymentId}]`);
+    } else if (stdout.includes('Great Ideas Deserve Great Technology')) {
+      console.log(`✅ Deployment verification passed for [${deploymentId}]`);
+    } else {
+      console.warn(`⚠️ Deployment verification warning for [${deploymentId}] - content may be outdated`);
+    }
   });
 }
 
@@ -200,7 +346,6 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-const PORT = process.env.PORT || 4040;
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Clyvanta deploy webhook v2.0.0 running on port ${PORT}`);
   console.log(`📍 Production deploy: GET /deploy?token=${DEPLOY_TOKEN}`);
