@@ -6,34 +6,71 @@ on:
 
 jobs:
   deploy:
-    name: Manual Deploy Instructions
+    name: Deploy to DigitalOcean
     runs-on: ubuntu-latest
+    environment: production
     
     steps:
-    - name: Display Deploy Commands
+    - name: Deploy via SSH
       run: |
-        echo "🚀 DEPLOYMENT READY!"
-        echo ""
-        echo "Run these commands manually to deploy:"
-        echo ""
-        echo "ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@159.203.61.237 << 'EOF'"
-        echo "  # Pull latest code"
-        echo "  cd ~ && git clone https://github.com/vicky3074/clyvanta.git temp_repo || (cd temp_repo && git pull)"
-        echo "  "
-        echo "  # Generate SSL certificates"
-        echo "  cd temp_repo && mkdir -p ssl"
-        echo "  openssl genrsa -out ssl/key.pem 2048"
-        echo "  openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 -subj '/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com'"
-        echo "  "
-        echo "  # Stop existing containers"
-        echo "  docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true"
-        echo "  docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true"
-        echo "  "
-        echo "  # Start new containers"
-        echo "  docker-compose up -d --build"
-        echo "  "
-        echo "  # Cleanup"
-        echo "  cd ~ && rm -rf temp_repo"
-        echo "EOF"
-        echo ""
-        echo "✅ Copy and run the commands above to complete deployment!"
+        echo "🚀 Starting automated deployment..."
+        
+        # Setup SSH
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+        
+        # Deploy to server
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
+          echo "📦 Pulling latest code..."
+          
+          # Remove old deployment if exists
+          rm -rf clyvanta-new || true
+          
+          # Pull fresh code
+          git clone https://github.com/vicky3074/clyvanta.git clyvanta-new
+          cd clyvanta-new
+          
+          echo "🔐 Generating SSL certificates..."
+          mkdir -p ssl
+          openssl genrsa -out ssl/key.pem 2048
+          openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
+          
+          echo "🛑 Stopping existing containers..."
+          docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true
+          docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true
+          
+          echo "🚀 Starting new containers..."
+          docker compose up -d --build
+          
+          echo "✅ Deployment completed successfully!"
+        EOF
+        
+        # Cleanup SSH key
+        rm -f ~/.ssh/deploy_key
+        
+        echo "🎉 Automated deployment finished!"
+
+    - name: Verify Deployment
+      run: |
+        echo "🏥 Verifying deployment..."
+        sleep 30
+        
+        # Test HTTP
+        if curl -f -s http://${{ secrets.DROPLET_IP }}:8080 > /dev/null; then
+          echo "✅ HTTP is working"
+        else
+          echo "❌ HTTP verification failed"
+          exit 1
+        fi
+        
+        # Test HTTPS (through Cloudflare)
+        if curl -f -s https://clyvanta.com > /dev/null; then
+          echo "✅ HTTPS is working"
+        else
+          echo "⚠️ HTTPS may still be propagating"
+        fi
+        
+        echo "🌍 Deployment verification completed!"
+        echo "🔗 Site: https://clyvanta.com"
