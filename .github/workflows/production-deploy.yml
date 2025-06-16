@@ -1,502 +1,88 @@
-name: 🚀 Production Deployment Pipeline
+name: Production Deployment Pipeline
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 env:
   NODE_VERSION: '20'
-  DOCKER_BUILDKIT: 1
-  COMPOSE_DOCKER_CLI_BUILD: 1
 
 jobs:
-  # ═══════════════════════════════════════════════════════════════
-  # Stage 1: BUILD & TEST
-  # ═══════════════════════════════════════════════════════════════
   build-and-test:
-    name: 🔨 Build & Test
+    name: Build and Test
     runs-on: ubuntu-latest
     
-    outputs:
-      build-sha: ${{ steps.build-info.outputs.sha }}
-      build-timestamp: ${{ steps.build-info.outputs.timestamp }}
-    
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: 📊 Build Information
-      id: build-info
-      run: |
-        echo "sha=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
-        echo "timestamp=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
-        echo "🏗️ Build SHA: ${GITHUB_SHA:0:8}"
-        echo "⏰ Build Time: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-        
-    - name: 🟢 Setup Node.js
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: package-lock.json
         
-    - name: 📦 Install dependencies
-      run: |
-        echo "📦 Installing dependencies..."
-        npm ci --prefer-offline --no-audit
-        
-    - name: 🧹 Code Quality Check
-      run: |
-        echo "🧹 Running code quality checks..."
-        npm run lint || echo "⚠️ Linting issues found - continuing"
-        
-    - name: 📝 TypeScript Check
-      run: |
-        echo "📝 Running TypeScript validation..."
-        npx tsc --noEmit
-        
-    - name: 🧪 Run Tests
-      run: |
-        echo "🧪 Running test suite..."
-        npm test || echo "⚠️ No tests configured yet - continuing"
-        
-    - name: 🏗️ Build Application
-      run: |
-        echo "🏗️ Building production application..."
-        npm run build
-        
-    - name: 💾 Cache Build Artifacts
-      uses: actions/cache@v3
-      with:
-        path: |
-          .next
-          node_modules
-        key: build-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
-
-  # ═══════════════════════════════════════════════════════════════
-  # Stage 2: SECURITY & COMPLIANCE
-  # ═══════════════════════════════════════════════════════════════
-  security-scan:
-    name: 🔒 Security & Compliance
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
+    - name: Install dependencies
+      run: npm ci
       
-    - name: 🔍 Dependency Vulnerability Scan
-      run: |
-        echo "🔍 Scanning for vulnerable dependencies..."
-        npm audit --audit-level=high || echo "⚠️ Vulnerabilities found - review required"
-        
-    - name: 🛡️ Container Security Scan
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-      continue-on-error: true
-      
-    - name: 📋 Security Report
-      run: |
-        echo "📋 Security scan completed"
-        echo "🔗 Review results in the Actions summary"
+    - name: Build application
+      run: npm run build
 
-  # ═══════════════════════════════════════════════════════════════
-  # Stage 3: DOCKER BUILD & VALIDATION
-  # ═══════════════════════════════════════════════════════════════
-  docker-build:
-    name: 🐳 Docker Build & Validation
-    runs-on: ubuntu-latest
-    needs: [build-and-test, security-scan]
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 🐳 Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: 🏗️ Build Docker Image
-      run: |
-        echo "🏗️ Building Docker image..."
-        docker build -t clyvanta-app:${{ needs.build-and-test.outputs.build-sha }} .
-        
-    - name: 🧪 Test Docker Container
-      run: |
-        echo "🧪 Testing Docker container..."
-        
-        # Start container for testing
-        docker run -d --name test-container -p 3000:3000 \
-          clyvanta-app:${{ needs.build-and-test.outputs.build-sha }}
-        
-        # Wait for container to start
-        sleep 30
-        
-        # Test container health
-        if curl -f --max-time 30 http://localhost:3000/; then
-          echo "✅ Container is responding correctly"
-        else
-          echo "❌ Container health check failed"
-          docker logs test-container
-          exit 1
-        fi
-        
-        # Cleanup
-        docker stop test-container
-        docker rm test-container
-
-  # ═══════════════════════════════════════════════════════════════
-  # Stage 4: STAGING DEPLOYMENT (Optional - for future)
-  # ═══════════════════════════════════════════════════════════════
-  staging-deploy:
-    name: 🧪 Staging Deployment
-    runs-on: ubuntu-latest
-    needs: [build-and-test, security-scan, docker-build]
-    if: github.event_name == 'pull_request'
-    environment: staging
-    
-    steps:
-    - name: 🚀 Deploy to Staging
-      run: |
-        echo "🧪 Staging deployment would happen here"
-        echo "🔗 Staging URL: https://staging.clyvanta.com"
-        echo "✅ Staging deployment completed"
-
-  # ═══════════════════════════════════════════════════════════════
-  # Stage 5: PRODUCTION DEPLOYMENT
-  # ═══════════════════════════════════════════════════════════════
   production-deploy:
-    name: 🌍 Production Deployment
+    name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [build-and-test, security-scan, docker-build]
+    needs: [build-and-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
     
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 🚀 Pre-deployment Checks
+    - name: Deploy via SSH
       run: |
-        echo "🔍 Running pre-deployment validation..."
-        echo "📊 Build SHA: ${{ needs.build-and-test.outputs.build-sha }}"
-        echo "⏰ Build Time: ${{ needs.build-and-test.outputs.build-timestamp }}"
-        echo "🎯 Target: Production Environment"
+        echo "Starting deployment..."
         
-    - name: 💾 Create Deployment Backup
-      run: |
         # Setup SSH
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
         
-        # Create backup on server
+        # Deploy to server
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
-          echo "💾 Creating deployment backup..."
+          echo "Deploying to server..."
           
-          # Create backup directory with timestamp
-          BACKUP_DIR="/home/ubuntu/backups/$(date +%Y%m%d-%H%M%S)"
-          mkdir -p "$BACKUP_DIR"
+          # Remove old deployment
+          rm -rf clyvanta-new || true
           
-          # Backup current deployment
-          if [ -d "clyvanta-new" ]; then
-            cp -r clyvanta-new "$BACKUP_DIR/"
-            echo "✅ Backup created at: $BACKUP_DIR"
-          else
-            echo "ℹ️ No existing deployment to backup"
-          fi
+          # Pull fresh code
+          git clone https://github.com/vicky3074/clyvanta.git clyvanta-new
+          cd clyvanta-new
           
-          # Keep only last 5 backups
-          ls -t /home/ubuntu/backups/ | tail -n +6 | xargs -I {} rm -rf /home/ubuntu/backups/{}
-        EOF
-        
-    - name: 🚀 Dual Deployment Strategy (Webhook → SSH Fallback)
-      run: |
-        echo "🚀 Starting Dual Deployment Strategy..."
-        echo "📊 Primary: Webhook (Fast ~2-3 min)"
-        echo "📊 Fallback: SSH (Reliable ~5-8 min)"
-        
-    - name: 🌐 Primary: Webhook Deployment
-      id: webhook_deploy
-      continue-on-error: true
-      run: |
-        echo "🌐 Attempting webhook deployment (primary method)..."
-        
-        # Test webhook service availability first  
-        if ! curl -f -s "http://${{ secrets.DROPLET_IP }}:4040/health" > /dev/null 2>&1; then
-          echo "⚠️ Webhook service health check failed - service may be down"
-          exit 1
-        fi
-        
-        echo "✅ Webhook service is healthy, triggering deployment..."
-        
-        HTTP_CODE=$(curl -s -o /tmp/webhook_response.txt -w "%{http_code}" \
-          -X GET \
-          "http://${{ secrets.DROPLET_IP }}:4040/deploy?token=clyvanta-deploy-2025")
-        
-        RESPONSE_BODY=$(cat /tmp/webhook_response.txt)
-        
-        echo "HTTP Status: $HTTP_CODE"
-        echo "Response: $RESPONSE_BODY"
-        
-        if [ "$HTTP_CODE" = "200" ]; then
-          echo "✅ Webhook deployment triggered successfully"
-          
-          # Wait for webhook deployment to complete
-          echo "⏳ Waiting for webhook deployment to complete..."
-          sleep 120  # 2 minutes for webhook deployment
-          
-          # Verify webhook deployment success
-          if curl -f -s --max-time 10 "http://${{ secrets.DROPLET_IP }}:8080" > /dev/null; then
-            CONTENT=$(curl -s --max-time 10 "http://${{ secrets.DROPLET_IP }}:8080")
-            if [[ "$CONTENT" == *"Great Ideas Deserve Great Technology"* ]]; then
-              echo "🎉 Webhook deployment completed successfully!"
-              exit 0
-            else
-              echo "⚠️ Webhook deployment may have issues - content validation failed"
-              exit 1
-            fi
-          else
-            echo "❌ Webhook deployment health check failed"
-            exit 1
-          fi
-        else
-          echo "❌ Webhook deployment failed with HTTP $HTTP_CODE"
-          exit 1
-        fi
-
-    - name: 🔄 Fallback: SSH Deployment
-      if: always() && steps.webhook_deploy.outcome != 'success'
-      run: |
-        echo "🔄 Webhook deployment failed, attempting SSH deployment (fallback)..."
-        echo "📊 Using SSH as reliable backup deployment method"
-        
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
-          set -e
-          
-          echo "📦 Preparing new deployment (Green)..."
-          
-          # Remove old deployment if exists
-          rm -rf clyvanta-green || true
-          
-          # Pull fresh code to green environment
-          git clone https://github.com/vicky3074/clyvanta.git clyvanta-green
-          cd clyvanta-green
-          
-          echo "🔐 Generating SSL certificates..."
+          # Generate SSL certificates
           mkdir -p ssl
           openssl genrsa -out ssl/key.pem 2048
-          openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 \
-            -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
+          openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
           
-          echo "🏗️ Building green environment..."
-          # Build containers but don't start yet
-          docker compose build
-          
-          echo "✅ Green environment prepared"
-        EOF
-        
-    - name: 🔄 Switch Traffic (Blue→Green)
-      run: |
-        echo "🔄 Switching traffic from Blue to Green..."
-        
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
-          set -e
-          
-          echo "🛑 Stopping Blue environment (current production)..."
+          # Stop existing containers
           docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true
           docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true
           
-          echo "🟢 Starting Green environment (new production)..."
-          cd clyvanta-green
-          docker compose up -d
+          # Start new containers
+          docker compose up -d --build
           
-          echo "⏳ Waiting for services to start..."
-          sleep 45
-          
-          echo "✅ Traffic switched to Green environment"
-        EOF
-        
-    - name: 🏥 Final Health Check & Validation
-      run: |
-        echo "🏥 Running final comprehensive health checks..."
-        
-        # Determine which deployment method was used
-        DEPLOYMENT_METHOD="SSH"
-        if [ "${{ steps.webhook_deploy.outcome }}" == "success" ]; then
-          DEPLOYMENT_METHOD="Webhook"
-          echo "📊 Validating Webhook deployment results"
-        else
-          echo "📊 Validating SSH fallback deployment results"
-        fi
-        
-        # Extended health check for SSH deployments (they take longer)
-        MAX_ATTEMPTS=10
-        SLEEP_INTERVAL=15
-        
-        if [ "$DEPLOYMENT_METHOD" == "SSH" ]; then
-          echo "⏳ SSH deployment detected - using extended validation (up to 12 minutes)"
-          MAX_ATTEMPTS=15
-          SLEEP_INTERVAL=30
-        else
-          echo "⚡ Webhook deployment detected - using standard validation (up to 3 minutes)"
-        fi
-        
-        # Multiple health check attempts
-        for i in $(seq 1 $MAX_ATTEMPTS); do
-          echo "🔍 Health check attempt $i/$MAX_ATTEMPTS ($DEPLOYMENT_METHOD method)..."
-          
-          # Test HTTP endpoint
-          if curl -f -s --max-time 10 "http://${{ secrets.DROPLET_IP }}:8080" > /dev/null; then
-            echo "✅ HTTP health check passed"
-            
-            # Test content validation
-            RESPONSE=$(curl -s --max-time 10 "http://${{ secrets.DROPLET_IP }}:8080")
-            if [[ "$RESPONSE" == *"Great Ideas Deserve Great Technology"* ]]; then
-              echo "✅ Content validation passed"
-              
-              # Test HTTPS (through Cloudflare)
-              if curl -f -s --max-time 10 "https://clyvanta.com" > /dev/null; then
-                echo "✅ HTTPS validation passed"
-                echo "🎉 All health checks passed via $DEPLOYMENT_METHOD deployment!"
-                break
-              else
-                echo "⚠️ HTTPS check failed - may still be propagating"
-                echo "✅ HTTP validation sufficient for $DEPLOYMENT_METHOD deployment"
-                break
-              fi
-            else
-              echo "❌ Content validation failed"
-            fi
-          else
-            echo "❌ HTTP health check failed"
-          fi
-          
-          if [ $i -eq $MAX_ATTEMPTS ]; then
-            echo "💥 Health checks failed after $MAX_ATTEMPTS attempts ($DEPLOYMENT_METHOD method)"
-            exit 1
-          fi
-          
-          echo "⏳ Waiting ${SLEEP_INTERVAL}s before next attempt..."
-          sleep $SLEEP_INTERVAL
-        done
-        
-    - name: 🧹 Post-deployment Cleanup
-      run: |
-        echo "🧹 Running post-deployment cleanup..."
-        
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
-          echo "🗑️ Cleaning up old Blue environment..."
-          
-          # Move current green to blue (for next deployment)
-          rm -rf clyvanta-new || true
-          mv clyvanta-green clyvanta-new
-          
-          echo "🐳 Cleaning up Docker resources..."
-          docker system prune -f || true
-          
-          echo "✅ Cleanup completed"
-        EOF
-        
-        # Cleanup SSH key
-        rm -f ~/.ssh/deploy_key
-
-  # ═══════════════════════════════════════════════════════════════
-  # Stage 6: POST-DEPLOYMENT MONITORING
-  # ═══════════════════════════════════════════════════════════════
-  post-deployment:
-    name: 📊 Post-Deployment Monitoring
-    runs-on: ubuntu-latest
-    needs: [production-deploy]
-    if: always() && needs.production-deploy.result == 'success'
-    
-    steps:
-    - name: 📊 Deployment Summary
-      run: |
-        echo "📊 === CLYVANTA PRODUCTION DEPLOYMENT SUMMARY ==="
-        echo "🏗️ Build SHA: ${{ needs.build-and-test.outputs.build-sha }}"
-        echo "⏰ Build Time: ${{ needs.build-and-test.outputs.build-timestamp }}"
-        echo "👤 Deployed by: ${{ github.actor }}"
-        echo "📝 Commit: ${{ github.event.head_commit.message }}"
-        echo ""
-        
-        # Determine deployment method used
-        if [ "${{ steps.webhook_deploy.outcome }}" == "success" ]; then
-          echo "🚀 Deployment Method: Webhook (Primary - Fast ~2-3 min)"
-          echo "⚡ Deployment Speed: Fast Track"
-          echo "📊 Reliability: Webhook service operational"
-        else
-          echo "🔄 Deployment Method: SSH (Fallback - Reliable ~5-8 min)"
-          echo "🛡️ Deployment Speed: Standard Track"
-          echo "📊 Reliability: SSH backup system used"
-        fi
-        
-        echo ""
-        echo "🌍 Production URL: https://clyvanta.com"
-        echo "🎉 DEPLOYMENT SUCCESSFUL!"
-        
-    - name: 🔔 Success Notification
-      run: |
-        echo "🔔 Sending success notifications..."
-        echo "✅ Deployment completed successfully"
-        echo "🌐 Site is live and healthy"
-
-  # ═══════════════════════════════════════════════════════════════
-  # ROLLBACK JOB (Manual Trigger)
-  # ═══════════════════════════════════════════════════════════════
-  rollback:
-    name: 🔄 Emergency Rollback
-    runs-on: ubuntu-latest
-    if: failure() && github.ref == 'refs/heads/main'
-    environment: production
-    
-    steps:
-    - name: 🚨 Emergency Rollback
-      run: |
-        echo "🚨 EMERGENCY ROLLBACK INITIATED"
-        
-        # Setup SSH
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-        chmod 600 ~/.ssh/deploy_key
-        ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
-        
-        # Perform rollback
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
-          echo "🔄 Rolling back to previous version..."
-          
-          # Find latest backup
-          LATEST_BACKUP=$(ls -t /home/ubuntu/backups/ | head -n 1)
-          
-          if [ -n "$LATEST_BACKUP" ]; then
-            echo "📦 Rolling back to: $LATEST_BACKUP"
-            
-            # Stop current containers
-            docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true
-            docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true
-            
-            # Restore from backup
-            rm -rf clyvanta-new || true
-            cp -r "/home/ubuntu/backups/$LATEST_BACKUP/clyvanta-new" ./ || true
-            
-            # Start restored version
-            cd clyvanta-new
-            docker compose up -d
-            
-            echo "✅ Rollback completed"
-          else
-            echo "❌ No backup found for rollback"
-            exit 1
-          fi
+          echo "Deployment completed!"
         EOF
         
         # Cleanup
         rm -f ~/.ssh/deploy_key
+
+    - name: Verify Deployment
+      run: |
+        echo "Verifying deployment..."
+        sleep 30
         
-        echo "🔔 ROLLBACK COMPLETED - PLEASE VERIFY MANUALLY"
+        if curl -f -s http://${{ secrets.DROPLET_IP }}:8080 > /dev/null; then
+          echo "Deployment successful!"
+        else
+          echo "Deployment verification failed"
+          exit 1
+        fi

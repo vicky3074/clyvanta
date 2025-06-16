@@ -1,7 +1,7 @@
-name: 🔧 Simple Deployment (Backup)
+name: 🔧 Simple Deployment (Emergency Backup)
 
 on:
-  workflow_dispatch: # Manual trigger only
+  workflow_dispatch: # Manual trigger only - emergency use
 
 jobs:
   deploy:
