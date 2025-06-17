@@ -13,14 +13,6 @@ export default function AboutPage() {
       <section className="pt-32 pb-16 bg-gradient-to-br from-clyvanta-bg-light to-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-16">
-            <nav className="flex justify-center mb-6" aria-label="Breadcrumb">
-              <ol className="flex items-center space-x-2 text-sm">
-                <li><Link href="/" className="text-clyvanta-text-secondary hover:text-clyvanta-blue-dark">Home</Link></li>
-                <li><span className="text-clyvanta-text-secondary">/</span></li>
-                <li><span className="text-clyvanta-blue-dark font-medium">About</span></li>
-              </ol>
-            </nav>
-            
             <h1 className="text-5xl font-extrabold text-clyvanta-text-primary mb-6">
               About Clyvanta
             </h1>
