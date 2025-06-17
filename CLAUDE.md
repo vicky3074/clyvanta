@@ -76,24 +76,53 @@ jobs:
         curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
 ```
 
-**Step 4.2: GitHub Secrets Configuration** (Manual - User Action Required)
-1. Go to GitHub repository: https://github.com/vicky3074/clyvanta
-2. Click Settings → Secrets and Variables → Actions
-3. Add the following secrets:
+**GitHub Secrets Configuration** (Manual - User Action Required)
+
+**REQUIRED SECRETS:**
+Go to https://github.com/vicky3074/clyvanta/settings/secrets/actions and add:
+
+1. **Docker Hub Credentials:**
    - `DOCKER_USERNAME`: `vicky3074`
-   - `DOCKER_PASSWORD`: [Create Docker Hub Access Token]
+   - `DOCKER_PASSWORD`: [Docker Hub Access Token - see below]
+
+2. **Server Credentials (should exist from previous setup):**
+   - `SSH_PRIVATE_KEY`: [Your DigitalOcean SSH private key]
+   - `DROPLET_IP`: `159.203.61.237`
 
 **To create Docker Hub Access Token:**
 1. Go to https://hub.docker.com/settings/security
 2. Click "New Access Token"
 3. Name: "github-actions-clyvanta"
 4. Permissions: Read, Write, Delete
-5. Copy the token and add it as DOCKER_PASSWORD secret
+5. Copy token → add as `DOCKER_PASSWORD` secret in GitHub
 
-**Step 4.3: Docker Hub Integration Testing**
-- Test staging branch pushes to vicky3074/clyvanta:staging
-- Test main branch pushes to vicky3074/clyvanta:latest
-- Verify automatic deployment to production
+**Step 4.3: Docker Hub Integration Testing & Production Choice**
+
+**CURRENT PRODUCTION SETUP:**
+- Uses GitHub Environment: `production` 
+- Builds images on DigitalOcean server directly
+- Works but slower (rebuilds every deployment)
+
+**NEW DOCKER HUB OPTIONS:**
+
+**Option A: Keep Current + Add Docker Hub**
+- Keep existing `deploy.yml` (GitHub Environment)
+- Add new Docker Hub workflow for staging only
+- Production stays the same (reliable)
+
+**Option B: Full Docker Hub Migration** 
+- Replace current deployment with Docker Hub images
+- Faster deployments (pull vs build)
+- Update docker-compose.yml to use Docker Hub images
+
+**RECOMMENDED: Option A** (safer transition)
+```yaml
+# docker-compose.production.yml (new file)
+services:
+  clyvanta-web:
+    image: vicky3074/clyvanta:latest  # From Docker Hub
+    # ... rest of config
+```
 
 ## 🏗️ 2-Environment Architecture (June 2025)
 
@@ -115,10 +144,14 @@ jobs:
 - **Deployment**: GitHub Actions CI/CD pipeline
 - **Features**: Identical to local staging environment
 
-### **Development Workflow**
+### **Development Workflow** (Docker Hub)
 1. **Code**: Edit files locally
 2. **Test**: `docker compose up -d --build` → http://localhost:8080
-3. **Deploy**: `git commit && git push` → GitHub Actions → https://clyvanta.com
+3. **Deploy**: `git commit && git push` → GitHub Actions → Docker Hub → https://clyvanta.com
+
+**How it works:**
+- Push to `main` → Builds image → Pushes to Docker Hub → Deploys to production
+- Push to `staging` → Builds image → Pushes to Docker Hub (for testing)
 
 ### **Feature Branch Workflow**
 1. **Create feature**: `git checkout -b feature/your-feature`

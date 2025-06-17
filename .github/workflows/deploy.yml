@@ -1,18 +1,35 @@
-name: 🔧 Simple Deployment (Emergency Backup)
+name: 🚀 Production Deployment (Docker Hub)
 
 on:
-  workflow_dispatch: # Manual trigger only - emergency use
+  push:
+    branches: [ main, staging ]
 
 jobs:
-  deploy:
-    name: Deploy to DigitalOcean
+  build-and-deploy:
     runs-on: ubuntu-latest
-    environment: production
     
     steps:
-    - name: Deploy via SSH
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and Push Docker Image
       run: |
-        echo "🚀 Starting automated deployment..."
+        echo "🔨 Building Docker image for branch: ${{ github.ref_name }}"
+        docker build -t vicky3074/clyvanta:${{ github.ref_name }} .
+        echo "📤 Pushing to Docker Hub..."
+        docker push vicky3074/clyvanta:${{ github.ref_name }}
+        echo "✅ Successfully pushed vicky3074/clyvanta:${{ github.ref_name }}"
+        
+    - name: Deploy to Production
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "🚀 Deploying to production via SSH..."
         
         # Setup SSH
         mkdir -p ~/.ssh
@@ -20,44 +37,35 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
         
-        # Deploy to server
+        # Deploy to server using Docker Hub images
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
-          echo "📦 Pulling latest code..."
-          
-          # Remove old deployment if exists
-          rm -rf clyvanta-new || true
-          
-          # Pull fresh code
-          git clone https://github.com/vicky3074/clyvanta.git clyvanta-new
+          echo "📦 Deploying from Docker Hub..."
           cd clyvanta-new
           
-          echo "🔐 Generating SSL certificates..."
-          mkdir -p ssl
-          openssl genrsa -out ssl/key.pem 2048
-          openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
+          echo "⬇️ Pulling latest images from Docker Hub..."
+          docker pull vicky3074/clyvanta:latest
           
           echo "🛑 Stopping existing containers..."
-          docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true
-          docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true
+          docker compose down || true
           
-          echo "🚀 Starting new containers..."
-          docker compose up -d --build
+          echo "🚀 Starting new containers from Docker Hub..."
+          docker compose up -d
           
-          echo "✅ Deployment completed successfully!"
+          echo "✅ Docker Hub deployment completed!"
         EOF
         
         # Cleanup SSH key
         rm -f ~/.ssh/deploy_key
+        echo "✅ Production deployment completed"
         
-        echo "🎉 Automated deployment finished!"
-
     - name: Verify Deployment
+      if: github.ref == 'refs/heads/main'
       run: |
         echo "🏥 Verifying deployment..."
         sleep 30
         
         # Test HTTP
-        if curl -f -s http://${{ secrets.DROPLET_IP }}:8080 > /dev/null; then
+        if curl -f -s http://159.203.61.237:8080 > /dev/null; then
           echo "✅ HTTP is working"
         else
           echo "❌ HTTP verification failed"
@@ -72,4 +80,3 @@ jobs:
         fi
         
         echo "🌍 Deployment verification completed!"
-        echo "🔗 Site: https://clyvanta.com"
