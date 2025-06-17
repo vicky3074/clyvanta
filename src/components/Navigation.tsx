@@ -36,7 +36,7 @@ export default function Navigation({ className = '' }: NavigationProps) {
     }
   }, [isMenuOpen]);
 
-  // Handle smooth scrolling
+  // Handle navigation
   const handleNavClick = (href: string) => {
     setIsMenuOpen(false);
     if (href.startsWith('#')) {
@@ -45,16 +45,16 @@ export default function Navigation({ className = '' }: NavigationProps) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } else {
-      // For external pages, let the browser handle navigation
+      // For page navigation, use Next.js Link behavior
       window.location.href = href;
     }
   };
 
   const navLinks = [
-    { href: '#services', label: 'Our Solutions' },
+    { href: '/services', label: 'Our Solutions' },
     { href: '/solutions-in-action', label: 'Solutions in Action' },
     { href: '/about', label: 'About Us' },
-    { href: '#contact', label: 'Contact' },
+    { href: '/contact', label: 'Contact' },
   ];
 
   return (
@@ -81,14 +81,25 @@ export default function Navigation({ className = '' }: NavigationProps) {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
-              <button
-                key={link.href}
-                onClick={() => handleNavClick(link.href)}
-                className="relative text-clyvanta-text-secondary font-medium hover:text-clyvanta-blue-dark transition-colors group"
-              >
-                {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-clyvanta-blue-light transition-all group-hover:w-full"></span>
-              </button>
+              link.href.startsWith('#') ? (
+                <button
+                  key={link.href}
+                  onClick={() => handleNavClick(link.href)}
+                  className="relative text-clyvanta-text-secondary font-medium hover:text-clyvanta-blue-dark transition-colors group"
+                >
+                  {link.label}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-clyvanta-blue-light transition-all group-hover:w-full"></span>
+                </button>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="relative text-clyvanta-text-secondary font-medium hover:text-clyvanta-blue-dark transition-colors group"
+                >
+                  {link.label}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-clyvanta-blue-light transition-all group-hover:w-full"></span>
+                </Link>
+              )
             ))}
             <button className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-8 py-3 rounded-full font-semibold shadow-[0_4px_15px_rgba(0,212,255,0.3)] hover:shadow-[0_6px_25px_rgba(0,212,255,0.4)] transform hover:-translate-y-0.5 transition-all duration-300">
               Get a Project Quote
@@ -117,13 +128,24 @@ export default function Navigation({ className = '' }: NavigationProps) {
       >
         <div className="flex flex-col px-6 py-6">
           {navLinks.map((link) => (
-            <button
-              key={link.href}
-              onClick={() => handleNavClick(link.href)}
-              className="text-clyvanta-text-secondary hover:text-clyvanta-blue-dark transition-all duration-300 py-4 border-b border-gray-100 last:border-0 text-lg font-medium hover:bg-clyvanta-bg-light hover:px-4 hover:rounded-lg w-full text-left"
-            >
-              {link.label}
-            </button>
+            link.href.startsWith('#') ? (
+              <button
+                key={link.href}
+                onClick={() => handleNavClick(link.href)}
+                className="text-clyvanta-text-secondary hover:text-clyvanta-blue-dark transition-all duration-300 py-4 border-b border-gray-100 last:border-0 text-lg font-medium hover:bg-clyvanta-bg-light hover:px-4 hover:rounded-lg w-full text-left"
+              >
+                {link.label}
+              </button>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-clyvanta-text-secondary hover:text-clyvanta-blue-dark transition-all duration-300 py-4 border-b border-gray-100 last:border-0 text-lg font-medium hover:bg-clyvanta-bg-light hover:px-4 hover:rounded-lg w-full text-left"
+              >
+                {link.label}
+              </Link>
+            )
           ))}
           <button 
             className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-8 py-3 rounded-full font-semibold mt-4 w-full"
