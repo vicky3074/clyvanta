@@ -34,6 +34,14 @@ Clyvanta is a strategic small business technology partner website built with Nex
 2. **Test**: `docker compose up -d --build` → http://localhost:8080
 3. **Deploy**: `git commit && git push` → GitHub Actions → https://clyvanta.com
 
+### **Feature Branch Workflow**
+1. **Create feature**: `git checkout -b feature/your-feature`
+2. **Develop & test**: Make changes → `docker compose up -d --build` → test locally
+3. **Commit**: `git add . && git commit -m "Your changes"`
+4. **Merge to staging**: `git checkout staging && git merge feature/your-feature`
+5. **Test staging**: Verify changes work
+6. **Deploy to production**: `git checkout main && git merge staging && git push`
+
 ### **Why 2 Environments (Not 3)**
 - ❌ **Port 3000 Development**: Next.js 15 Docker compatibility issues
 - ✅ **Port 8080 Staging**: Reliable, production-identical, 1-2 minute rebuilds
