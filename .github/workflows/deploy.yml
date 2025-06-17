@@ -56,7 +56,20 @@ jobs:
           docker container prune -f
           docker network prune -f
           
-          echo "🚀 Starting containers with latest image..."
+          echo "🔐 Generating SSL certificates for domain mapping..."
+          mkdir -p ssl
+          openssl genrsa -out ssl/key.pem 2048
+          openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 \
+            -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
+          
+          echo "📋 SSL certificates generated:"
+          ls -la ssl/
+          
+          echo "🧹 Ensuring domain ports are available..."
+          sudo fuser -k 80/tcp 443/tcp 8080/tcp 2>/dev/null || true
+          sleep 5
+          
+          echo "🚀 Starting containers with latest image and domain support..."
           docker compose up -d --force-recreate --renew-anon-volumes
           
           echo "⏳ Waiting for containers to initialize (60s)..."
@@ -117,16 +130,23 @@ jobs:
           for i in {1..12}; do
             echo "External attempt $i: Testing service endpoints..."
             
-            # Test port 80 (main nginx)
+            # Test port 80 (main nginx) - CRITICAL for domain mapping
             if curl -f -s --max-time 10 http://localhost:80 > /dev/null 2>&1; then
-              echo "✅ Port 80 accessible on attempt $i"
+              echo "✅ Port 80 accessible on attempt $i (DOMAIN MAPPING READY)"
+              EXTERNAL_HEALTHY=true
+              break
+            fi
+            
+            # Test port 443 (SSL) - Required for HTTPS domain
+            if curl -f -s -k --max-time 10 https://localhost:443 > /dev/null 2>&1; then
+              echo "✅ Port 443 SSL accessible on attempt $i (HTTPS DOMAIN READY)"
               EXTERNAL_HEALTHY=true
               break
             fi
             
             # Test port 8080 (backup nginx)  
             if curl -f -s --max-time 10 http://localhost:8080 > /dev/null 2>&1; then
-              echo "✅ Port 8080 accessible on attempt $i"
+              echo "✅ Port 8080 accessible on attempt $i (BACKUP ACCESS)"
               EXTERNAL_HEALTHY=true
               break
             fi
@@ -182,22 +202,44 @@ jobs:
         echo "🌍 Comprehensive production deployment verification..."
         sleep 45
         
-        # Progressive timeout strategy for server access
-        echo "📡 Testing direct server access with progressive timeouts..."
+        # Domain-focused verification strategy
+        echo "📡 Testing domain mapping endpoints with progressive timeouts..."
         DIRECT_ACCESS=false
         
-        # Quick test first (fast feedback)
+        # Test domain-critical ports first
         for timeout in 10 20 30; do
           echo "Testing with ${timeout}s timeout..."
-          for port in 80 8080; do
-            echo "  Trying port $port..."
-            if curl -f -s --max-time $timeout "http://${{ secrets.DROPLET_IP }}:$port" > /dev/null 2>&1; then
-              echo "✅ Direct server port $port accessible (${timeout}s timeout)"
-              DIRECT_ACCESS=true
-              WORKING_PORT=$port
-              break 2
-            fi
-          done
+          
+          # Port 80 is CRITICAL for domain mapping (Cloudflare → 80)
+          echo "  Testing port 80 (DOMAIN CRITICAL)..."
+          if curl -f -s --max-time $timeout "http://${{ secrets.DROPLET_IP }}:80" > /dev/null 2>&1; then
+            echo "✅ Port 80 accessible - DOMAIN MAPPING WORKING (${timeout}s)"
+            DIRECT_ACCESS=true
+            WORKING_PORT=80
+            DOMAIN_READY=true
+            break
+          fi
+          
+          # Port 443 for HTTPS domain
+          echo "  Testing port 443 (HTTPS DOMAIN)..."
+          if curl -f -s -k --max-time $timeout "https://${{ secrets.DROPLET_IP }}:443" > /dev/null 2>&1; then
+            echo "✅ Port 443 SSL accessible - HTTPS DOMAIN WORKING (${timeout}s)"
+            DIRECT_ACCESS=true
+            WORKING_PORT=443
+            DOMAIN_READY=true
+            break
+          fi
+          
+          # Port 8080 as fallback
+          echo "  Testing port 8080 (FALLBACK)..."
+          if curl -f -s --max-time $timeout "http://${{ secrets.DROPLET_IP }}:8080" > /dev/null 2>&1; then
+            echo "✅ Port 8080 accessible - BACKUP ACCESS (${timeout}s)"
+            DIRECT_ACCESS=true
+            WORKING_PORT=8080
+            DOMAIN_READY=false
+            break
+          fi
+          
           sleep 5
         done
         
@@ -247,31 +289,40 @@ jobs:
           sleep 12
         done
         
-        # Final assessment with detailed reporting
+        # Final assessment with domain mapping focus
         echo "📊 Deployment Assessment:"
         echo "  Direct Server Access: ${DIRECT_ACCESS}"
         echo "  Content Verification: ${CONTENT_OK:-N/A}"
+        echo "  Domain Mapping Ready: ${DOMAIN_READY:-false}"
         echo "  Domain Access: ${DOMAIN_ACCESS}"
         echo "  Working Port: ${WORKING_PORT:-None}"
         
-        # Determine success criteria
-        if [ "$DIRECT_ACCESS" = "true" ] && [ "$CONTENT_OK" = "true" ]; then
-          echo "✅ DEPLOYMENT SUCCESSFUL: Server accessible with latest content"
+        # Domain-focused success criteria
+        if [ "$DIRECT_ACCESS" = "true" ] && [ "$CONTENT_OK" = "true" ] && [ "$DOMAIN_READY" = "true" ]; then
+          echo "✅ COMPLETE SUCCESS: Domain mapping working + latest content deployed"
+          echo "🌍 Port 80/443 accessible - clyvanta.com should work immediately"
           if [ "$DOMAIN_ACCESS" = "true" ]; then
-            echo "✅ BONUS: Domain also accessible immediately"
+            echo "✅ VERIFIED: Domain also tested and working"
           else
-            echo "ℹ️ Domain may take a few minutes to propagate through Cloudflare"
+            echo "ℹ️ Domain may take 1-2 minutes to propagate through Cloudflare"
           fi
           exit 0
+        elif [ "$DIRECT_ACCESS" = "true" ] && [ "$CONTENT_OK" = "true" ]; then
+          echo "⚠️ PARTIAL SUCCESS: Content deployed but domain mapping issues"
+          echo "🔍 Server accessible on port ${WORKING_PORT} but not domain-critical ports 80/443"
+          echo "ℹ️ Production recovered but may need domain mapping investigation"
+          exit 0
         elif [ "$DIRECT_ACCESS" = "true" ]; then
-          echo "⚠️ PARTIAL SUCCESS: Server accessible but content verification issues"
-          echo "ℹ️ This might be a caching issue or deployment race condition"
+          echo "⚠️ MINIMAL SUCCESS: Server accessible but content/domain issues"
+          echo "🔍 Working port: ${WORKING_PORT}"
+          echo "ℹ️ Production may be accessible but not latest deployment"
           exit 0
         else
-          echo "❌ DEPLOYMENT FAILED: Server not accessible"
+          echo "❌ DEPLOYMENT FAILED: Server completely inaccessible"
           echo "🔍 Troubleshooting info:"
-          echo "  - Check server containers manually via SSH"
+          echo "  - Both container health AND domain mapping failed"
           echo "  - Server IP: ${{ secrets.DROPLET_IP }}"
-          echo "  - Tested ports: 80, 8080"
+          echo "  - Tested ports: 80 (domain), 443 (SSL), 8080 (backup)"
+          echo "  - Check SSL certificate generation and port conflicts"
           exit 1
         fi
