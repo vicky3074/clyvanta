@@ -1,9 +1,12 @@
 // Using inline SVG icons instead of heroicons for compatibility
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 import GeoText from '@/components/GeoText';
 
 export default function AppDevelopmentPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
+      <Navigation />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
@@ -299,6 +302,8 @@ export default function AppDevelopmentPage() {
           </div>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 }
