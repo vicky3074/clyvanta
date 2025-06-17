@@ -7,6 +7,38 @@ Clyvanta is a strategic small business technology partner website built with Nex
 - Header and footer fixes deployed across all pages
 - Breadcrumb navigation removed for modern design
 - Navigation links updated to proper page routes
+- **2-Environment Architecture Implemented**: Simplified from 3-tier to reliable 2-tier setup
+
+## 🏗️ 2-Environment Architecture (June 2025)
+
+### **Local Staging Environment (Port 8080)**
+- **Purpose**: Development and testing with production-identical setup
+- **URL**: http://localhost:8080
+- **Features**: Full nginx + postgres + production build
+- **Hot Rebuild Workflow**: 
+  ```bash
+  # Make code changes, then rebuild:
+  docker compose up -d --build
+  # Wait 1-2 minutes for rebuild
+  # Test changes at http://localhost:8080
+  ```
+
+### **Production Environment (DigitalOcean)**
+- **Purpose**: Live website
+- **URL**: https://clyvanta.com
+- **Deployment**: GitHub Actions CI/CD pipeline
+- **Features**: Identical to local staging environment
+
+### **Development Workflow**
+1. **Code**: Edit files locally
+2. **Test**: `docker compose up -d --build` → http://localhost:8080
+3. **Deploy**: `git commit && git push` → GitHub Actions → https://clyvanta.com
+
+### **Why 2 Environments (Not 3)**
+- ❌ **Port 3000 Development**: Next.js 15 Docker compatibility issues
+- ✅ **Port 8080 Staging**: Reliable, production-identical, 1-2 minute rebuilds
+- ✅ **Production**: Proven CI/CD pipeline
+- **Result**: Simple, reliable, professional workflow
 
 ## 🎯 Strategic Positioning (January 2025)
 - **Target Audience**: Small business owners with 1-50 employees
