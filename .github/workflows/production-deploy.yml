@@ -74,8 +74,8 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
         
-        # SSH deployment with extended timeouts
-        timeout 600 ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
+        # SSH deployment with optimized timeouts
+        timeout 180 ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=15 ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
           echo "SSH deployment starting..."
           cd clyvanta-new || { echo "Directory not found"; exit 1; }
           
@@ -83,50 +83,50 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           
-          # Memory-safe deployment with cleanup and sequential builds
-          echo "Checking memory and cleaning up before build..."
+          # Fast memory-safe deployment
+          echo "Pre-deployment system check..."
           FREE_MEM=$(free -m | awk 'NR==2{printf "%.0f", $7}')
           echo "Available memory: ${FREE_MEM}MB"
           
-          # Clean up Docker resources if memory is low or as preventive measure
-          if [ $FREE_MEM -lt 400 ]; then
-            echo "Low memory detected, cleaning Docker resources..."
+          # Smart cleanup - only if really needed
+          if [ $FREE_MEM -lt 300 ]; then
+            echo "Critical memory shortage, cleaning Docker resources..."
             docker system prune -f
-          else
-            echo "Preventive Docker cleanup..."
+          elif [ $FREE_MEM -lt 500 ]; then
+            echo "Memory moderate, light cleanup..."
             docker image prune -f
+          else
+            echo "Memory sufficient (${FREE_MEM}MB), skipping cleanup"
           fi
           
-          # Sequential container builds to avoid memory exhaustion
-          echo "Building containers sequentially for memory safety..."
-          echo "Building web container..."
-          docker compose build clyvanta-web
-          
-          echo "Building nginx container..."
-          docker compose build clyvanta-nginx
-          
-          # Start containers with restart policy
-          echo "Starting containers..."
-          docker compose up -d
-          
-          # Restart webhook service if needed
-          echo "Ensuring webhook service is running..."
-          docker-compose -f docker-compose.webhook.yml up -d || echo "Webhook service start skipped"
-          
-          # Wait for containers to be healthy
-          echo "Waiting for containers to start..."
-          sleep 30
-          
-          # Final memory check and cleanup
-          FINAL_MEM=$(free -m | awk 'NR==2{printf "%.0f", $7}')
-          echo "Final memory status: ${FINAL_MEM}MB available"
-          
-          # Verify deployment
-          if curl -f -s --max-time 10 http://localhost:8080 > /dev/null; then
-            echo "SSH deployment successful!"
-            echo "System memory: ${FINAL_MEM}MB available"
+          # Try smart restart first (faster than rebuild)
+          echo "Attempting smart deployment (restart existing containers)..."
+          if docker compose pull --quiet && docker compose up -d; then
+            echo "Smart deployment successful, containers restarted"
+            REBUILD_NEEDED=false
           else
-            echo "SSH deployment verification failed"
+            echo "Smart deployment failed, will rebuild containers..."
+            REBUILD_NEEDED=true
+          fi
+          
+          # Only rebuild if smart restart failed
+          if [ "$REBUILD_NEEDED" = "true" ]; then
+            echo "Sequential rebuild required..."
+            docker compose build clyvanta-web
+            docker compose build clyvanta-nginx  
+            docker compose up -d
+          fi
+          
+          # Quick health check (reduced wait time)
+          echo "Verifying containers..."
+          sleep 10
+          
+          # Final verification
+          if curl -f -s --max-time 5 http://localhost:8080 > /dev/null; then
+            FINAL_MEM=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+            echo "✅ SSH deployment successful! Memory: ${FINAL_MEM}MB available"
+          else
+            echo "❌ SSH deployment verification failed"
             exit 1
           fi
         EOF
