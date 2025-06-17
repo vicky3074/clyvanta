@@ -74,8 +74,8 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
         
-        # SSH deployment with timeouts
-        timeout 300 ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
+        # SSH deployment with extended timeouts
+        timeout 600 ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
           echo "SSH deployment starting..."
           cd clyvanta-new || { echo "Directory not found"; exit 1; }
           
@@ -83,9 +83,17 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           
-          # Graceful deployment without stopping database
-          docker compose build --no-cache clyvanta-web clyvanta-nginx
+          # Optimized deployment with build caching
+          echo "Building optimized containers..."
+          docker compose build clyvanta-web clyvanta-nginx
+          
+          # Start containers with restart policy
+          echo "Starting containers..."
           docker compose up -d
+          
+          # Restart webhook service if needed
+          echo "Ensuring webhook service is running..."
+          docker-compose -f docker-compose.webhook.yml up -d || echo "Webhook service start skipped"
           
           # Wait for containers to be healthy
           sleep 30
