@@ -83,9 +83,27 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           
-          # Optimized deployment with build caching
-          echo "Building optimized containers..."
-          docker compose build clyvanta-web clyvanta-nginx
+          # Memory-safe deployment with cleanup and sequential builds
+          echo "Checking memory and cleaning up before build..."
+          FREE_MEM=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+          echo "Available memory: ${FREE_MEM}MB"
+          
+          # Clean up Docker resources if memory is low or as preventive measure
+          if [ $FREE_MEM -lt 400 ]; then
+            echo "Low memory detected, cleaning Docker resources..."
+            docker system prune -f
+          else
+            echo "Preventive Docker cleanup..."
+            docker image prune -f
+          fi
+          
+          # Sequential container builds to avoid memory exhaustion
+          echo "Building containers sequentially for memory safety..."
+          echo "Building web container..."
+          docker compose build clyvanta-web
+          
+          echo "Building nginx container..."
+          docker compose build clyvanta-nginx
           
           # Start containers with restart policy
           echo "Starting containers..."
@@ -96,11 +114,17 @@ jobs:
           docker-compose -f docker-compose.webhook.yml up -d || echo "Webhook service start skipped"
           
           # Wait for containers to be healthy
+          echo "Waiting for containers to start..."
           sleep 30
+          
+          # Final memory check and cleanup
+          FINAL_MEM=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+          echo "Final memory status: ${FINAL_MEM}MB available"
           
           # Verify deployment
           if curl -f -s --max-time 10 http://localhost:8080 > /dev/null; then
             echo "SSH deployment successful!"
+            echo "System memory: ${FINAL_MEM}MB available"
           else
             echo "SSH deployment verification failed"
             exit 1
