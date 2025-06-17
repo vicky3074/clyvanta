@@ -144,14 +144,21 @@ services:
 - **Deployment**: GitHub Actions CI/CD pipeline
 - **Features**: Identical to local staging environment
 
-### **Development Workflow** (Docker Hub)
+### **Development Workflow** (Robust Docker Hub System)
 1. **Code**: Edit files locally
 2. **Test**: `docker compose up -d --build` → http://localhost:8080
 3. **Deploy**: `git commit && git push` → GitHub Actions → Docker Hub → https://clyvanta.com
 
 **How it works:**
-- Push to `main` → Builds image → Pushes to Docker Hub → Deploys to production
+- Push to `main` → Builds image → Pushes to Docker Hub → Robust deployment with health checks
 - Push to `staging` → Builds image → Pushes to Docker Hub (for testing)
+
+**Deployment Features:**
+- ✅ **Container Health Checks**: Verifies web + nginx containers respond
+- ✅ **Graceful Restarts**: Proper container shutdown/startup sequence  
+- ✅ **Domain Verification**: Tests both direct server + Cloudflare access
+- ✅ **Failure Detection**: Exits with error if deployment fails
+- ✅ **No Manual Fixes**: Fully automated with robust error handling
 
 ### **Feature Branch Workflow**
 1. **Create feature**: `git checkout -b feature/your-feature`
