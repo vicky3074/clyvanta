@@ -38,6 +38,45 @@ Clyvanta is a strategic small business technology partner website built with Nex
 - **Use Cases Data**: 3 detailed hypothetical examples with metrics and ROI
 - **Icon System Migration**: Inline SVGs replacing Heroicons for compatibility
 
+### 🚨 CRITICAL: Production Outage Recovery (June 16, 2025)
+
+**INCIDENT:** Website went down with 502 Bad Gateway after failed deployment attempts
+
+**ROOT CAUSE:** 
+- Failed/cancelled deployments stopped Docker containers
+- SSH connectivity issues on DigitalOcean server prevented automated deployments
+- Containers never restarted automatically, leaving site down
+
+**EMERGENCY RECOVERY PROCEDURE:**
+1. **Access DigitalOcean Console** (bypasses SSH issues)
+   - Login to https://cloud.digitalocean.com
+   - Find droplet with IP 159.203.61.237
+   - Click "Console" to access server directly
+
+2. **Check Container Status**
+   ```bash
+   su - ubuntu
+   cd clyvanta-new
+   docker ps -a  # Check if containers are running
+   ```
+
+3. **Restart Containers** (if down)
+   ```bash
+   docker compose up -d  # Start with existing images (fast)
+   # OR if needed:
+   docker compose up -d --build  # Rebuild and start (slow)
+   ```
+
+4. **Verify Recovery**
+   ```bash
+   curl http://localhost:8080  # Should return HTML
+   ```
+
+**PREVENTION:** 
+- SSH connectivity issues need separate investigation
+- Consider automated container health monitoring
+- Document this procedure for future outages
+
 ### 🚨 CRITICAL: Localhost Development Issues & Solutions
 
 **PROBLEM:** The localhost development server frequently refuses connections with error "This site can't be reached localhost refused to connect"

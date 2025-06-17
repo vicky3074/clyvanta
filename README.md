@@ -140,6 +140,21 @@ Manual deployment:
 curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
 ```
 
+## 🚨 Emergency Recovery
+
+If the website goes down (502 Bad Gateway), follow the [Production Outage Recovery Guide](docs/PRODUCTION_OUTAGE_RECOVERY.md):
+
+1. **Access DigitalOcean Console** (when SSH fails)
+2. **Check container status**: `docker ps -a`  
+3. **Restart containers**: `docker compose up -d`
+4. **Verify recovery**: `curl http://localhost:8080`
+
+**Quick Recovery Commands:**
+```bash
+su - ubuntu && cd clyvanta-new
+docker compose up -d
+```
+
 ## 📊 Development Roadmap
 
 See [docs/tasks/tasks-clyvanta-website.md](docs/tasks/tasks-clyvanta-website.md) for detailed implementation plan.

@@ -36,53 +36,87 @@ jobs:
     environment: production
     
     steps:
-    - name: Deploy via SSH
+    - name: Deploy via Webhook (Primary)
+      id: webhook_deploy
+      continue-on-error: true
       run: |
-        echo "Starting deployment..."
+        echo "Attempting webhook deployment..."
         
-        # Setup SSH
+        # Check webhook health first
+        if curl -f -s --max-time 10 "http://${{ secrets.DROPLET_IP }}:4040/health" > /dev/null; then
+          echo "Webhook service healthy, proceeding with deployment..."
+          
+          # Deploy via webhook
+          RESPONSE=$(curl -f -s --max-time 300 "http://${{ secrets.DROPLET_IP }}:4040/deploy?token=clyvanta-deploy-2025")
+          
+          if [[ "$RESPONSE" == *"success"* ]]; then
+            echo "Webhook deployment successful!"
+            echo "webhook_success=true" >> $GITHUB_OUTPUT
+          else
+            echo "Webhook deployment failed: $RESPONSE"
+            echo "webhook_success=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+        else
+          echo "Webhook service not healthy, will fallback to SSH"
+          echo "webhook_success=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Deploy via SSH (Fallback)
+      if: steps.webhook_deploy.outputs.webhook_success != 'true'
+      run: |
+        echo "Webhook failed, using SSH deployment..."
+        
+        # Setup SSH with timeout
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
         
-        # Deploy to server
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
-          echo "Deploying to server..."
+        # SSH deployment with timeouts
+        timeout 300 ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
+          echo "SSH deployment starting..."
+          cd clyvanta-new || { echo "Directory not found"; exit 1; }
           
-          # Remove old deployment
-          rm -rf clyvanta-new || true
+          # Pull latest changes (faster than full clone)
+          git fetch origin main
+          git reset --hard origin/main
           
-          # Pull fresh code
-          git clone https://github.com/vicky3074/clyvanta.git clyvanta-new
-          cd clyvanta-new
+          # Graceful deployment without stopping database
+          docker compose build --no-cache clyvanta-web clyvanta-nginx
+          docker compose up -d
           
-          # Generate SSL certificates
-          mkdir -p ssl
-          openssl genrsa -out ssl/key.pem 2048
-          openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
+          # Wait for containers to be healthy
+          sleep 30
           
-          # Stop existing containers
-          docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true
-          docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true
-          
-          # Start new containers
-          docker compose up -d --build
-          
-          echo "Deployment completed!"
+          # Verify deployment
+          if curl -f -s --max-time 10 http://localhost:8080 > /dev/null; then
+            echo "SSH deployment successful!"
+          else
+            echo "SSH deployment verification failed"
+            exit 1
+          fi
         EOF
         
         # Cleanup
         rm -f ~/.ssh/deploy_key
 
-    - name: Verify Deployment
+    - name: Verify Final Deployment
       run: |
-        echo "Verifying deployment..."
-        sleep 30
+        echo "Final deployment verification..."
+        sleep 15
         
-        if curl -f -s http://${{ secrets.DROPLET_IP }}:8080 > /dev/null; then
-          echo "Deployment successful!"
-        else
-          echo "Deployment verification failed"
-          exit 1
-        fi
+        # Test website response
+        for i in {1..3}; do
+          if curl -f -s --max-time 10 http://${{ secrets.DROPLET_IP }}:8080 > /dev/null; then
+            echo "✅ Deployment verification successful!"
+            exit 0
+          else
+            echo "⚠️ Verification attempt $i failed, retrying..."
+            sleep 10
+          fi
+        done
+        
+        echo "❌ Deployment verification failed after 3 attempts"
+        exit 1
