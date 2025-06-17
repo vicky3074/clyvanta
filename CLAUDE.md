@@ -11,6 +11,92 @@ Clyvanta is a strategic small business technology partner website built with Nex
 
 ## 🏗️ 2-Environment Architecture (June 2025)
 
+### **Phase 3: Docker Hub Setup Instructions** ✅ COMPLETED
+
+**Step 3.1: Create Docker Hub Account** ✅ COMPLETED
+- Account: vicky3074 (GitHub login)
+- Verified and logged in
+
+**Step 3.2: Repository Configuration** ✅ COMPLETED (Account: vicky3074)
+```bash
+# Login to Docker Hub:
+docker login
+# Use your Docker Hub credentials (vicky3074)
+
+# Build and tag staging image:
+docker compose build
+docker tag clyvanta-nginx:latest vicky3074/clyvanta:staging
+docker tag clyvanta-website:latest vicky3074/clyvanta-app:staging
+
+# Build and tag production image:
+docker tag clyvanta-nginx:latest vicky3074/clyvanta:latest
+docker tag clyvanta-website:latest vicky3074/clyvanta-app:latest
+
+# Push images to Docker Hub:
+docker push vicky3074/clyvanta:staging
+docker push vicky3074/clyvanta-app:staging
+docker push vicky3074/clyvanta:latest
+```
+
+### **Phase 4: GitHub Actions Implementation**
+
+**Step 4.1: Enhanced CI/CD Pipeline** 
+```yaml
+# .github/workflows/ci-cd-docker-hub.yml
+name: 🚀 CI/CD with Docker Hub
+
+on:
+  push:
+    branches: [ main, staging ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and Push
+      run: |
+        docker build -t vicky3074/clyvanta:${{ github.ref_name }} .
+        docker push vicky3074/clyvanta:${{ github.ref_name }}
+        
+    - name: Deploy to Production
+      if: github.ref == 'refs/heads/main'
+      run: |
+        # Deploy using existing webhook system
+        curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
+```
+
+**Step 4.2: GitHub Secrets Configuration** (Manual - User Action Required)
+1. Go to GitHub repository: https://github.com/vicky3074/clyvanta
+2. Click Settings → Secrets and Variables → Actions
+3. Add the following secrets:
+   - `DOCKER_USERNAME`: `vicky3074`
+   - `DOCKER_PASSWORD`: [Create Docker Hub Access Token]
+
+**To create Docker Hub Access Token:**
+1. Go to https://hub.docker.com/settings/security
+2. Click "New Access Token"
+3. Name: "github-actions-clyvanta"
+4. Permissions: Read, Write, Delete
+5. Copy the token and add it as DOCKER_PASSWORD secret
+
+**Step 4.3: Docker Hub Integration Testing**
+- Test staging branch pushes to vicky3074/clyvanta:staging
+- Test main branch pushes to vicky3074/clyvanta:latest
+- Verify automatic deployment to production
+
+## 🏗️ 2-Environment Architecture (June 2025)
+
 ### **Local Staging Environment (Port 8080)**
 - **Purpose**: Development and testing with production-identical setup
 - **URL**: http://localhost:8080
