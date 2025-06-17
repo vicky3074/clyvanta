@@ -1,0 +1,122 @@
+# Complete Self-Contained Clyvanta Deployment
+# Includes: Next.js app + Nginx + SSL + All configurations
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+# Install autoprefixer if not already in package.json
+RUN npm ci && npm list autoprefixer || npm install autoprefixer
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Build the application with CSS optimization flags
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# Complete production image with nginx + web app
+FROM nginx:alpine AS production
+
+# Install required packages for complete deployment
+RUN apk add --no-cache \
+    nodejs \
+    npm \
+    openssl \
+    curl \
+    supervisor \
+    && rm -rf /var/cache/apk/*
+
+# Create application directory
+WORKDIR /app
+
+# Copy Next.js application from builder
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# Copy all configuration files into the image
+COPY nginx.simple.conf /etc/nginx/nginx.conf
+COPY docker-compose.yml /app/docker-compose.yml
+
+# Create directory structure
+RUN mkdir -p /app/ssl \
+    && mkdir -p /var/log/supervisor \
+    && mkdir -p /app/database
+
+# Copy database initialization if exists
+COPY database/ /app/database/ 2>/dev/null || echo "No database files to copy"
+
+# Create SSL certificate generation script
+RUN cat > /app/generate-ssl.sh << 'EOF'
+#!/bin/sh
+echo "🔐 Generating SSL certificates for clyvanta.com..."
+mkdir -p /app/ssl
+openssl genrsa -out /app/ssl/key.pem 2048
+openssl req -new -x509 -key /app/ssl/key.pem -out /app/ssl/cert.pem -days 365 \
+  -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
+echo "✅ SSL certificates generated"
+ls -la /app/ssl/
+EOF
+
+RUN chmod +x /app/generate-ssl.sh
+
+# Create supervisord configuration to run both nginx and next.js
+RUN cat > /etc/supervisor/conf.d/supervisord.conf << 'EOF'
+[supervisord]
+nodaemon=true
+logfile=/var/log/supervisor/supervisord.log
+pidfile=/var/run/supervisord.pid
+
+[program:ssl-generation]
+command=/app/generate-ssl.sh
+autostart=true
+autorestart=false
+startsecs=0
+priority=100
+stdout_logfile=/var/log/supervisor/ssl.log
+stderr_logfile=/var/log/supervisor/ssl.log
+
+[program:nextjs]
+command=node /app/server.js
+directory=/app
+autostart=true
+autorestart=true
+startsecs=5
+priority=200
+environment=NODE_ENV=production,PORT=3000,HOSTNAME=0.0.0.0
+stdout_logfile=/var/log/supervisor/nextjs.log
+stderr_logfile=/var/log/supervisor/nextjs.log
+user=nobody
+
+[program:nginx]
+command=nginx -g "daemon off;"
+autostart=true
+autorestart=true
+startsecs=10
+priority=300
+stdout_logfile=/var/log/supervisor/nginx.log
+stderr_logfile=/var/log/supervisor/nginx.log
+depends_on=ssl-generation,nextjs
+EOF
+
+# Update nginx config to use internal app path for SSL
+RUN sed -i 's|/etc/nginx/ssl|/app/ssl|g' /etc/nginx/nginx.conf
+
+# Expose all required ports
+EXPOSE 80 443 8080 3000
+
+# Health check for the complete system
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:80 || curl -f http://localhost:8080 || exit 1
+
+# Start all services with supervisor
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

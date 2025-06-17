@@ -19,13 +19,20 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
     
-    - name: Build and Push Docker Image
+    - name: Build and Push Complete Docker Image
       run: |
-        echo "🔨 Building Docker image for branch: ${{ github.ref_name }}"
-        docker build -t vicky3074/clyvanta:${{ github.ref_name }} .
-        echo "📤 Pushing to Docker Hub..."
-        docker push vicky3074/clyvanta:${{ github.ref_name }}
-        echo "✅ Successfully pushed vicky3074/clyvanta:${{ github.ref_name }}"
+        echo "🔨 Building complete self-contained Docker image for branch: ${{ github.ref_name }}"
+        docker build -f Dockerfile.complete -t vicky3074/clyvanta-complete:${{ github.ref_name }} .
+        echo "📤 Pushing complete image to Docker Hub..."
+        docker push vicky3074/clyvanta-complete:${{ github.ref_name }}
+        echo "✅ Successfully pushed vicky3074/clyvanta-complete:${{ github.ref_name }}"
+        
+        # Also tag as latest for main branch
+        if [ "${{ github.ref_name }}" = "main" ]; then
+          docker tag vicky3074/clyvanta-complete:${{ github.ref_name }} vicky3074/clyvanta-complete:latest
+          docker push vicky3074/clyvanta-complete:latest
+          echo "✅ Also pushed as vicky3074/clyvanta-complete:latest"
+        fi
         
     - name: Deploy to Production
       if: github.ref == 'refs/heads/main'
@@ -38,39 +45,33 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
         
-        # Robust deployment with proper container handling
+        # Self-contained deployment - no filesystem dependencies
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
-          echo "📦 Starting Docker Hub deployment..."
+          echo "📦 Starting self-contained Docker Hub deployment..."
           cd clyvanta-new || { echo "❌ Project directory not found"; exit 1; }
+          
+          echo "📄 Ensuring complete docker-compose file is available..."
+          git pull origin main || echo "⚠️ Git pull failed, using existing files"
           
           echo "📋 Current system status:"
           docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
           
-          echo "⬇️ Pulling latest Docker Hub image..."
-          docker pull vicky3074/clyvanta:latest || { echo "❌ Failed to pull Docker image"; exit 1; }
+          echo "⬇️ Pulling complete self-contained image..."
+          docker pull vicky3074/clyvanta-complete:latest || { echo "❌ Failed to pull complete Docker image"; exit 1; }
           
           echo "🛑 Gracefully stopping all containers..."
-          docker compose down --timeout 30 || echo "⚠️ Some containers may already be stopped"
+          docker compose -f docker-compose.complete.yml down --timeout 30 || echo "⚠️ Some containers may already be stopped"
           
           echo "🧹 Cleaning up old containers and networks..."
           docker container prune -f
           docker network prune -f
           
-          echo "🔐 Generating SSL certificates for domain mapping..."
-          mkdir -p ssl
-          openssl genrsa -out ssl/key.pem 2048
-          openssl req -new -x509 -key ssl/key.pem -out ssl/cert.pem -days 365 \
-            -subj "/C=CA/ST=Ontario/L=Toronto/O=Clyvanta/CN=clyvanta.com"
-          
-          echo "📋 SSL certificates generated:"
-          ls -la ssl/
-          
           echo "🧹 Ensuring domain ports are available..."
           sudo fuser -k 80/tcp 443/tcp 8080/tcp 2>/dev/null || true
           sleep 5
           
-          echo "🚀 Starting containers with latest image and domain support..."
-          docker compose up -d --force-recreate --renew-anon-volumes
+          echo "🚀 Starting self-contained deployment..."
+          docker compose -f docker-compose.complete.yml up -d --force-recreate
           
           echo "⏳ Waiting for containers to initialize (60s)..."
           sleep 60
@@ -88,39 +89,37 @@ jobs:
           echo "📋 Compose project containers:"
           docker compose ps
           
-          # Find actual container names dynamically
-          WEB_CONTAINER=$(docker ps --filter "label=com.docker.compose.service=clyvanta-web" --format "{{.Names}}" | head -1)
-          NGINX_CONTAINER=$(docker ps --filter "label=com.docker.compose.service=clyvanta-nginx" --format "{{.Names}}" | head -1)
+          # Find the complete container
+          COMPLETE_CONTAINER=$(docker ps --filter "label=com.docker.compose.service=clyvanta-complete" --format "{{.Names}}" | head -1)
           
           echo "🔍 Detected containers:"
-          echo "  Web container: ${WEB_CONTAINER:-NOT_FOUND}"
-          echo "  Nginx container: ${NGINX_CONTAINER:-NOT_FOUND}"
+          echo "  Complete container: ${COMPLETE_CONTAINER:-NOT_FOUND}"
           
-          # Verify web container is responding (using dynamic name)
-          echo "🌐 Testing web container health..."
-          if [ -n "$WEB_CONTAINER" ]; then
+          # Verify complete container is responding (using dynamic name)
+          echo "🌐 Testing complete container health..."
+          if [ -n "$COMPLETE_CONTAINER" ]; then
             for i in {1..10}; do
-              echo "Attempt $i: Testing container $WEB_CONTAINER..."
-              if docker exec "$WEB_CONTAINER" curl -f -s --max-time 5 http://localhost:3000 > /dev/null 2>&1; then
-                echo "✅ Web container health check passed on attempt $i"
-                WEB_HEALTHY=true
+              echo "Attempt $i: Testing container $COMPLETE_CONTAINER..."
+              if docker exec "$COMPLETE_CONTAINER" curl -f -s --max-time 5 http://localhost:80 > /dev/null 2>&1; then
+                echo "✅ Complete container health check passed on attempt $i"
+                CONTAINER_HEALTHY=true
                 break
               else
-                echo "⏳ Web container health check attempt $i/10 failed, retrying..."
+                echo "⏳ Complete container health check attempt $i/10 failed, retrying..."
                 sleep 6
               fi
               
               if [ $i -eq 10 ]; then
-                echo "❌ Web container health checks failed after 10 attempts"
+                echo "❌ Complete container health checks failed after 10 attempts"
                 echo "📋 Container logs:"
-                docker logs "$WEB_CONTAINER" --tail 30
+                docker logs "$COMPLETE_CONTAINER" --tail 50
                 echo "📋 Container inspect:"
-                docker inspect "$WEB_CONTAINER" --format '{{.State.Status}}: {{.State.Error}}'
+                docker inspect "$COMPLETE_CONTAINER" --format '{{.State.Status}}: {{.State.Error}}'
               fi
             done
           else
-            echo "❌ No web container found - checking external access..."
-            WEB_HEALTHY=false
+            echo "❌ No complete container found - checking external access..."
+            CONTAINER_HEALTHY=false
           fi
           
           # Alternative health check strategy - external access (more reliable)
@@ -151,12 +150,11 @@ jobs:
               break
             fi
             
-            # Test if web container is directly accessible (troubleshooting)
-            if [ -n "$WEB_CONTAINER" ]; then
-              WEB_IP=$(docker inspect "$WEB_CONTAINER" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' | head -1)
-              if [ -n "$WEB_IP" ] && curl -f -s --max-time 5 "http://${WEB_IP}:3000" > /dev/null 2>&1; then
-                echo "✅ Web container directly accessible at $WEB_IP:3000 on attempt $i"
-                echo "⚠️ But nginx proxy may have issues"
+            # Test if complete container is directly accessible (troubleshooting)
+            if [ -n "$COMPLETE_CONTAINER" ]; then
+              CONTAINER_IP=$(docker inspect "$COMPLETE_CONTAINER" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' | head -1)
+              if [ -n "$CONTAINER_IP" ] && curl -f -s --max-time 5 "http://${CONTAINER_IP}:80" > /dev/null 2>&1; then
+                echo "✅ Complete container directly accessible at $CONTAINER_IP:80 on attempt $i"
                 EXTERNAL_HEALTHY=true
                 break
               fi
@@ -167,19 +165,15 @@ jobs:
           done
           
           # Final health assessment
-          if [ "$WEB_HEALTHY" = "true" ] || [ "$EXTERNAL_HEALTHY" = "true" ]; then
-            echo "✅ Service is healthy (container or external access working)"
+          if [ "$CONTAINER_HEALTHY" = "true" ] || [ "$EXTERNAL_HEALTHY" = "true" ]; then
+            echo "✅ Self-contained service is healthy (complete container working)"
           else
-            echo "❌ Service health checks failed completely"
+            echo "❌ Self-contained service health checks failed completely"
             echo "📋 Final diagnostics:"
             docker ps -a
-            if [ -n "$WEB_CONTAINER" ]; then
-              echo "📋 Web container logs:"
-              docker logs "$WEB_CONTAINER" --tail 50
-            fi
-            if [ -n "$NGINX_CONTAINER" ]; then
-              echo "📋 Nginx container logs:"
-              docker logs "$NGINX_CONTAINER" --tail 50
+            if [ -n "$COMPLETE_CONTAINER" ]; then
+              echo "📋 Complete container logs:"
+              docker logs "$COMPLETE_CONTAINER" --tail 50
             fi
             echo "📋 System resources:"
             df -h
