@@ -3,6 +3,11 @@
 ## Project Overview
 Clyvanta is a strategic small business technology partner website built with Next.js 15, TypeScript, and Tailwind CSS. The site targets small business owners (1-50 employees) with practical technology solutions and features geo-targeting for Toronto-based visitors. It includes a complete CI/CD pipeline using GitHub Actions and webhook-based deployment to DigitalOcean.
 
+## Latest Updates (June 17, 2025)
+- Header and footer fixes deployed across all pages
+- Breadcrumb navigation removed for modern design
+- Navigation links updated to proper page routes
+
 ## 🎯 Strategic Positioning (January 2025)
 - **Target Audience**: Small business owners with 1-50 employees
 - **Value Proposition**: "Great Ideas Deserve Great Technology"
