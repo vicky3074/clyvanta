@@ -1,0 +1,88 @@
+name: 🚀 Simple Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    environment: 
+      name: production
+      url: https://clyvanta.com
+    steps:
+      - name: 🚀 Deploy to production server
+        run: |
+          echo "🚀 Starting deployment..."
+          echo "📊 Commit: ${{ github.sha }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          
+          # SSH into production server and deploy
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/ssh_key
+          chmod 600 /tmp/ssh_key
+          
+          ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
+            set -e
+            cd clyvanta-new
+            
+            echo "📦 Creating backup..."
+            docker tag clyvanta-website:latest clyvanta-website:backup-$(date +%Y%m%d-%H%M%S) 2>/dev/null || true
+            docker tag clyvanta-nginx:latest clyvanta-nginx:backup-$(date +%Y%m%d-%H%M%S) 2>/dev/null || true
+            
+            echo "⬇️ Pulling latest code..."
+            git fetch origin
+            git reset --hard origin/main
+            
+            echo "🔄 Building and deploying..."
+            docker compose down
+            docker compose up -d --build
+            
+            echo "⏳ Waiting for containers..."
+            sleep 30
+            
+            echo "🏥 Health check..."
+            for i in {1..10}; do
+              if curl -f http://localhost:8080 > /dev/null 2>&1; then
+                echo "✅ Health check passed!"
+                break
+              fi
+              echo "⏳ Attempt $i/10..."
+              sleep 10
+            done
+            
+            if ! curl -f http://localhost:8080 > /dev/null 2>&1; then
+              echo "❌ Health check failed! Rolling back..."
+              docker compose down
+              git reset --hard HEAD~1
+              docker compose up -d --build
+              exit 1
+            fi
+            
+            echo "🎉 Deployment successful!"
+          EOF
+
+      - name: ✅ Verify deployment
+        run: |
+          echo "🔍 Final verification..."
+          sleep 10
+          
+          if curl -f https://clyvanta.com > /dev/null 2>&1; then
+            echo "✅ Production site is live!"
+            echo "🔗 https://clyvanta.com"
+          else
+            echo "❌ Site verification failed"
+            exit 1
+          fi
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: rm -f /tmp/ssh_key
+
+      - name: 🎉 Success notification
+        run: |
+          echo "🎉 Deployment completed successfully!"
+          echo "🔗 Site: https://clyvanta.com"
+          echo "📊 Commit: ${{ github.sha }}"
+          echo "👤 Deployed by: ${{ github.actor }}"
