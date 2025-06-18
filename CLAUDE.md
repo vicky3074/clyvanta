@@ -1,179 +1,94 @@
 # Clyvanta Project - Claude Desktop Instructions
 
 ## Project Overview
-Clyvanta is a strategic small business technology partner website built with Next.js 15, TypeScript, and Tailwind CSS. The site targets small business owners (1-50 employees) with practical technology solutions and features geo-targeting for Toronto-based visitors. It includes a complete CI/CD pipeline using GitHub Actions and webhook-based deployment to DigitalOcean.
+Clyvanta is a strategic small business technology partner website built with Next.js 15, TypeScript, and Tailwind CSS. The site targets small business owners (1-50 employees) with practical technology solutions and features geo-targeting for Toronto-based visitors.
 
-## Latest Updates (June 18, 2025)
-- **NEW SERVER MIGRATION**: Successfully migrated to new DigitalOcean server (138.197.169.120)
-- **DNS UPDATE**: Updated clyvanta.com to point to new server infrastructure
-- **CI/CD VERIFICATION**: Confirmed automated deployment pipeline working on new server
-- **DOCUMENTATION UPDATE**: All references updated to new server IP
-- **ARCHITECTURE SIMPLIFIED**: Single port 8080 for both local staging and production
+## 🚨 CRITICAL INFRASTRUCTURE SETUP (June 18, 2025)
 
-## 🏗️ 2-Environment Architecture (June 2025)
+### **Environment Architecture**
+- **Local Staging**: http://localhost:8080 (Docker - EXACT production replica)
+- **Production**: https://clyvanta.com (DigitalOcean server: 138.197.169.120)
+- **Git**: GitHub repository with automated CI/CD (DISABLED for stability)
 
-### **Phase 3: Docker Hub Setup Instructions** ✅ COMPLETED
-
-**Step 3.1: Create Docker Hub Account** ✅ COMPLETED
-- Account: vicky3074 (GitHub login)
-- Verified and logged in
-
-**Step 3.2: Repository Configuration** ✅ COMPLETED (Account: vicky3074)
+### **SSH Access Configuration**
 ```bash
-# Login to Docker Hub:
-docker login
-# Use your Docker Hub credentials (vicky3074)
+# Claude has SSH access with this key:
+ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@138.197.169.120
 
-# Build and tag staging image:
-docker compose build
-docker tag clyvanta-nginx:latest vicky3074/clyvanta:staging
-docker tag clyvanta-website:latest vicky3074/clyvanta-app:staging
-
-# Build and tag production image:
-docker tag clyvanta-nginx:latest vicky3074/clyvanta:latest
-docker tag clyvanta-website:latest vicky3074/clyvanta-app:latest
-
-# Push images to Docker Hub:
-docker push vicky3074/clyvanta:staging
-docker push vicky3074/clyvanta-app:staging
-docker push vicky3074/clyvanta:latest
+# NEVER ask user to manually SSH - Claude can do it directly
 ```
 
-### **Phase 4: GitHub Actions Implementation**
+### **🚨 EMERGENCY PRODUCTION RECOVERY**
+When production site goes down (502 Bad Gateway, containers stopped):
 
-**Step 4.1: Enhanced CI/CD Pipeline** 
-```yaml
-# .github/workflows/ci-cd-docker-hub.yml
-name: 🚀 CI/CD with Docker Hub
+```bash
+# 1. SSH into production server (Claude can do this directly)
+ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@138.197.169.120
 
-on:
-  push:
-    branches: [ main, staging ]
-  pull_request:
-    branches: [ main ]
+# 2. Navigate to project directory
+cd clyvanta-new
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-    
-    - name: Build and Push
-      run: |
-        docker build -t vicky3074/clyvanta:${{ github.ref_name }} .
-        docker push vicky3074/clyvanta:${{ github.ref_name }}
-        
-    - name: Deploy to Production
-      if: github.ref == 'refs/heads/main'
-      run: |
-        # Deploy using existing webhook system
-        curl "http://138.197.169.120:4040/deploy?token=clyvanta-deploy-2025"
+# 3. Check container status
+docker ps -a
+
+# 4. Restart containers with last working images
+docker compose up -d
+
+# 5. Verify site is responding
+curl http://localhost:8080
+
+# 6. Check external access
+curl https://clyvanta.com
 ```
 
-**GitHub Secrets Configuration** (Manual - User Action Required)
+### **🔧 LOCAL DEVELOPMENT WORKFLOW**
 
-**REQUIRED SECRETS:**
-Go to https://github.com/vicky3074/clyvanta/settings/secrets/actions and add:
+**NEVER delete local Docker setup** - it's the production replica:
 
-1. **Docker Hub Credentials:**
-   - `DOCKER_USERNAME`: `vicky3074`
-   - `DOCKER_PASSWORD`: [Docker Hub Access Token - see below]
+```bash
+# Start local staging (matches production exactly)
+docker compose up -d --build
+# Access: http://localhost:8080
 
-2. **Server Credentials (should exist from previous setup):**
-   - `SSH_PRIVATE_KEY`: [Your DigitalOcean SSH private key]
-   - `DROPLET_IP`: `138.197.169.120`
+# Stop local staging  
+docker compose down
 
-**To create Docker Hub Access Token:**
-1. Go to https://hub.docker.com/settings/security
-2. Click "New Access Token"
-3. Name: "github-actions-clyvanta"
-4. Permissions: Read, Write, Delete
-5. Copy token → add as `DOCKER_PASSWORD` secret in GitHub
+# View logs
+docker logs clyvanta-website
+docker logs clyvanta-nginx
 
-**Step 4.3: Docker Hub Integration Testing & Production Choice**
-
-**CURRENT PRODUCTION SETUP:**
-- Uses GitHub Environment: `production` 
-- Builds images on DigitalOcean server directly
-- Works but slower (rebuilds every deployment)
-
-**NEW DOCKER HUB OPTIONS:**
-
-**Option A: Keep Current + Add Docker Hub**
-- Keep existing `deploy.yml` (GitHub Environment)
-- Add new Docker Hub workflow for staging only
-- Production stays the same (reliable)
-
-**Option B: Full Docker Hub Migration** 
-- Replace current deployment with Docker Hub images
-- Faster deployments (pull vs build)
-- Update docker-compose.yml to use Docker Hub images
-
-**RECOMMENDED: Option A** (safer transition)
-```yaml
-# docker-compose.production.yml (new file)
-services:
-  clyvanta-web:
-    image: vicky3074/clyvanta:latest  # From Docker Hub
-    # ... rest of config
+# Reset local to match production
+git reset --hard [production-commit]
+docker compose up -d --build
 ```
 
-## 🏗️ 2-Environment Architecture (June 2025)
+### **⚠️ DEPLOYMENT POLICY**
 
-### **Local Staging Environment (Port 8080)**
-- **Purpose**: Development and testing with production-identical setup
-- **URL**: http://localhost:8080
-- **Features**: Full nginx + postgres + production build
-- **Hot Rebuild Workflow**: 
-  ```bash
-  # Make code changes, then rebuild:
-  docker compose up -d --build
-  # Wait 1-2 minutes for rebuild
-  # Test changes at http://localhost:8080
-  ```
+**CURRENT STATUS**: Automated deployments DISABLED for stability
 
-### **Production Environment (DigitalOcean)**
-- **Purpose**: Live website
-- **URL**: https://clyvanta.com
-- **Deployment**: GitHub Actions CI/CD pipeline
-- **Features**: Identical to local staging environment
+```bash
+# DO NOT push to main branch - it will trigger failed deployments
+# All development stays local until user explicitly requests deployment
 
-### **Development Workflow** (Robust Docker Hub System)
-1. **Code**: Edit files locally
-2. **Test**: `docker compose up -d --build` → http://localhost:8080
-3. **Deploy**: `git commit && git push` → GitHub Actions → Docker Hub → https://clyvanta.com
+# Safe development:
+git checkout -b feature/your-changes  # Work on feature branch
+# Test locally with: docker compose up -d --build
+# DO NOT merge to main without user approval
+```
 
-**How it works:**
-- Push to `main` → Builds image → Pushes to Docker Hub → Robust deployment with health checks
-- Push to `staging` → Builds image → Pushes to Docker Hub (for testing)
+### **🏗️ Simple 2-Environment Setup**
 
-**Deployment Features:**
-- ✅ **Container Health Checks**: Verifies web + nginx containers respond
-- ✅ **Graceful Restarts**: Proper container shutdown/startup sequence  
-- ✅ **Domain Verification**: Tests both direct server + Cloudflare access
-- ✅ **Failure Detection**: Exits with error if deployment fails
-- ✅ **No Manual Fixes**: Fully automated with robust error handling
+**Local Staging (Port 8080)**:
+- Exact production replica
+- Docker containers: nginx + Next.js + postgres  
+- Safe testing environment
+- Command: `docker compose up -d --build`
 
-### **Feature Branch Workflow**
-1. **Create feature**: `git checkout -b feature/your-feature`
-2. **Develop & test**: Make changes → `docker compose up -d --build` → test locally
-3. **Commit**: `git add . && git commit -m "Your changes"`
-4. **Merge to staging**: `git checkout staging && git merge feature/your-feature`
-5. **Test staging**: Verify changes work
-6. **Deploy to production**: `git checkout main && git merge staging && git push`
-
-### **Why 2 Environments (Not 3)**
-- ❌ **Port 3000 Development**: Next.js 15 Docker compatibility issues
-- ✅ **Port 8080 Staging**: Reliable, production-identical, 1-2 minute rebuilds
-- ✅ **Production**: Proven CI/CD pipeline
-- **Result**: Simple, reliable, professional workflow
+**Production (https://clyvanta.com)**:
+- DigitalOcean server: 138.197.169.120
+- Same Docker setup as local
+- Stable, working deployment
+- SSH access: `ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@138.197.169.120`
 
 ## 🎯 Strategic Positioning (January 2025)
 - **Target Audience**: Small business owners with 1-50 employees
@@ -379,74 +294,22 @@ services:
 ## 🔧 Development Commands
 
 ```bash
-# Install dependencies
-npm install
+# Local staging (production replica)
+docker compose up -d --build     # Start local staging
+docker compose down              # Stop local staging  
+curl http://localhost:8080       # Test local staging
 
-# Run development server (NO TURBOPACK!)
-npm run dev
+# Code quality
+npm run build                    # Test build
+npm run lint                     # Check linting
+npx tsc --noEmit                # Check TypeScript
 
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Run linting
-npm run lint
-
-# Type checking
-npx tsc --noEmit
-
-# Docker production
-docker-compose up -d --build
+# Git workflow (feature branches only)
+git checkout -b feature/name     # Create feature branch
+git add . && git commit -m "..."  # Commit changes
+# Test with docker compose up -d --build
+# DO NOT push to main without user approval
 ```
-
-## 🚀 Deployment Process
-
-### Automatic (via GitHub Actions) - Enhanced Reliability
-1. Push to `main` branch triggers CI/CD
-2. Workflow runs: test → security → build → deploy
-3. **Dual deployment strategy** for maximum reliability:
-   - **Primary:** Webhook deployment (fast, preferred)
-   - **Fallback:** SSH deployment (reliable backup)
-4. Production environment updated automatically
-
-### Deployment Strategies
-
-#### **Primary: Webhook Deployment**
-- Fast deployment via HTTP webhook
-- Health check validation before deployment
-- Automatic service monitoring
-```bash
-curl "http://138.197.169.120:4040/deploy?token=clyvanta-deploy-2025"
-```
-
-#### **Fallback: SSH Deployment** 
-- Direct server access via SSH
-- Full container rebuild process
-- Webhook service restoration
-- Used automatically when webhook fails
-
-### Manual Deployment Options
-```bash
-# Health check first
-curl "http://138.197.169.120:4040/health"
-
-# Deploy via webhook (if healthy)
-curl "http://138.197.169.120:4040/deploy?token=clyvanta-deploy-2025"
-
-# Cleanup backups if needed
-curl "http://138.197.169.120:4040/cleanup?token=clyvanta-deploy-2025"
-```
-
-## 📊 GitHub Actions Workflow
-Enhanced deployment pipeline with high reliability:
-- **Dual deployment strategy**: Webhook + SSH fallback
-- **Multi-stage validation**: test → security → build → deploy
-- **Health check validation**: Pre-deployment service verification
-- **Automatic failover**: SSH deployment if webhook fails
-- **Enhanced monitoring**: Service health and deployment verification
-- **No manual approval**: Fully automated with robust error handling
 
 ## 🎨 Brand System
 Clyvanta brand colors and styling in `tailwind.config.ts`:
@@ -480,116 +343,46 @@ Clyvanta brand colors and styling in `tailwind.config.ts`:
 4. **Analytics**: User behavior tracking
 5. **SEO Enhancement**: Better meta tags and structured data
 
-## 🔍 Common Issues & Solutions
+## 🚨 Common Issues & Solutions
 
-### SSH Deployment & Vault Integration
-**CRITICAL LESSON:** Always verify correct API service when integrating with cloud providers
-
-**Problem**: GitHub Actions SSH deployment fails with "Method Not Allowed" despite working local authentication
-**Root Cause**: Using wrong service APIs - HCP Vault (dynamic secrets) vs HCP Vault Secrets (static secrets)
-**Solution**: 
-```yaml
-# CORRECT - HCP Vault Secrets API (static secrets)
-AUTH: "https://auth.idp.hashicorp.com/oauth2/token"
-SECRETS: "https://api.cloud.hashicorp.com/secrets/2023-11-28/organizations/.../ssh_key:open"
+### **Production Site Down (502 Bad Gateway)**
+```bash
+# Claude has direct SSH access - use immediately:
+ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@138.197.169.120 "cd clyvanta-new && docker compose up -d"
 ```
 
-**JSON Parsing for Multi-line Secrets**:
-```python
-# SSH keys break standard JSON tools - use Python
-import json
-ssh_key = data['secret']['static_version']['value']
-ssh_key = ssh_key.replace('\\\\n', '\n')  # Handle API escaping
+### **Local Docker Issues**
+```bash
+# Container build fails:
+docker compose down && docker compose up -d --build
+
+# Port conflicts:
+docker compose down && docker system prune -f
+
+# Reset to production state:
+git reset --hard [production-commit] && docker compose up -d --build
 ```
 
-**Individual Step Debugging Strategy**:
-- Break complex CI/CD into individual, testable steps
-- Use `continue-on-error: true` for precise failure identification
-- Implement comprehensive logging at each step
-
-### Development - LOCALHOST CONNECTION ISSUES
-**MOST COMMON PROBLEM:** "This site can't be reached localhost refused to connect"
-
-**IMMEDIATE SOLUTION:**
-1. Edit `package.json` and remove `--turbopack`:
-   ```json
-   "scripts": {
-     "dev": "next dev"
-   }
-   ```
-2. Kill all processes and restart:
-   ```bash
-   pkill -f node
-   lsof -ti:3000 | xargs kill -9
-   rm -rf .next
-   npm run dev
-   ```
-
-**OTHER DEVELOPMENT ISSUES:**
-- **Hot reload not working**: Restart dev server
-- **TypeScript errors**: Check `tsconfig.json` and run `npx tsc --noEmit`
-- **Tailwind not applying**: Restart dev server and check config
-
-### Deployment
+### **Development Issues** 
+- **TypeScript errors**: Run `npx tsc --noEmit`
+- **Tailwind not applying**: Restart docker containers
 - **Docker build fails**: Check Node.js version compatibility
-- **Webhook not responding**: Verify server status and tokens
-- **GitHub Actions failing**: Check secrets and webhook endpoints
-
 
 ---
 
-## 📝 Claude Desktop Prompt
+## 📝 Current Status & Next Steps
 
-Use this codebase to continue improving the Clyvanta website. Current state:
-- Modern glassmorphism design with animations is implemented
-- Component architecture is in place
-- CI/CD pipeline is working
-- Comprehensive services page with all details
-- Admin panel with secure authentication
-- File-based storage fallback system
+**✅ COMPLETED:**
+- Production-identical local staging environment  
+- Stable production deployment
+- Git repository synchronized with production
+- Emergency recovery procedures documented
 
-**CRITICAL:** Always check localhost connectivity issues first. If "localhost refused to connect", immediately remove Turbopack flag and restart development server.
+**🎯 DEVELOPMENT PRIORITIES:**
+1. Work on feature branches only (`git checkout -b feature/name`)
+2. Test all changes locally with `docker compose up -d --build`  
+3. No deployments without explicit user approval
+4. Focus on mobile responsiveness and GA4 implementation (when ready)
 
-Next priorities:
-1. Fix CI/CD deployment pipeline issues
-2. Fix favicon conflicts and viewport warnings  
-3. Complete mobile navigation menu
-4. Add loading states and error boundaries
-5. Implement email notifications
-
-The project has a working CI/CD pipeline - any changes you commit will automatically deploy to the production environment.
-
----
-
-## 📝 Strategic Transformation Summary (January 2025)
-
-### Key Changes Made
-1. **Repositioned** from AI company to small business technology partner
-2. **Implemented** geo-targeting for Toronto vs. Canada messaging
-3. **Created** "Solutions in Action" page with hypothetical use cases
-4. **Updated** all messaging to focus on small business needs (1-50 employees)
-5. **Built** individual service detail pages for web/app/AI services
-6. **Redesigned** About page with "Why We Started Clyvanta" narrative
-7. **Enhanced** contact page with geo-targeted content and better UX
-
-### New Site Structure
-```
-Homepage: "Great Ideas Deserve Great Technology"
-├── Our Solutions (service overview)
-├── Solutions in Action (use cases)
-│   ├── E-commerce Retailer Case
-│   ├── Home Services Business Case
-│   └── FinTech Startup Case
-├── Individual Service Pages
-│   ├── /solutions/web-development
-│   ├── /solutions/app-development
-│   └── /solutions/ai-automation
-├── About Us ("Why We Started Clyvanta")
-└── Contact (geo-targeted content)
-```
-
-### Geo-Targeting Implementation
-- **Toronto Visitors**: Local business focus, coffee meetings, GTA references
-- **Other Visitors**: Canadian business focus, remote collaboration
-
-For detailed documentation of all changes, see: `STRATEGIC_TRANSFORMATION_2025.md`
+**💡 STRATEGIC POSITION:**
+Small business technology partner serving 1-50 employee companies in Toronto/Canada with "Great Ideas Deserve Great Technology" messaging.
