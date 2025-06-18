@@ -1,0 +1,50 @@
+name: 🔍 Debug Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Debug SSH Connection
+      run: |
+        echo "🔍 Testing SSH connection and environment..."
+        
+        # Setup SSH
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+        
+        # Basic SSH test and environment check
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
+          echo "✅ SSH connection successful"
+          echo "📁 Current directory: $(pwd)"
+          echo "📁 Home directory: $(ls -la ~)"
+          
+          echo "🔍 Checking for project directory..."
+          if [ -d "clyvanta-new" ]; then
+            echo "✅ clyvanta-new directory exists"
+            cd clyvanta-new
+            echo "📁 Project directory contents: $(ls -la)"
+            echo "🔍 Git status: $(git status --porcelain)"
+          else
+            echo "❌ clyvanta-new directory not found"
+            echo "📁 Available directories: $(ls -la)"
+          fi
+          
+          echo "🐳 Docker status:"
+          docker --version || echo "❌ Docker not found"
+          docker ps || echo "❌ Docker ps failed"
+          
+          echo "🔍 Docker Compose status:"
+          docker compose version || echo "❌ Docker Compose not found"
+        EOF
+        
+        # Cleanup
+        rm -f ~/.ssh/deploy_key
+        echo "🔍 Debug complete"
