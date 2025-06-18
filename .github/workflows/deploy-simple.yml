@@ -20,7 +20,7 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
         
-        # Simple deployment
+        # Simple deployment with robust cleanup
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
           echo "📦 Deploying to production..."
           cd clyvanta-new
@@ -28,10 +28,21 @@ jobs:
           echo "📄 Pulling latest code..."
           git pull origin main
           
-          echo "🛑 Stopping containers..."
-          docker compose down
+          echo "🛑 Stopping and cleaning containers..."
+          # Stop containers by name (more reliable than compose down)
+          docker stop clyvanta-nginx clyvanta-website clyvanta-postgres || true
+          docker rm clyvanta-nginx clyvanta-website clyvanta-postgres || true
           
-          echo "🚀 Starting containers..."
+          # Clean up Docker resources
+          docker system prune -f
+          
+          # Ensure ports are free (kill any processes using our ports)
+          sudo fuser -k 80/tcp 8080/tcp 2>/dev/null || true
+          
+          echo "⏳ Waiting for ports to be available..."
+          sleep 5
+          
+          echo "🚀 Starting fresh containers..."
           docker compose up -d --build
           
           echo "⏳ Waiting 30s for startup..."
