@@ -16,6 +16,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Copy production environment variables
+COPY .env.production .env.production
+
 # Build the application with CSS optimization flags
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
