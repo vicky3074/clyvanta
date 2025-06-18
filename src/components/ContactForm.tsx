@@ -180,10 +180,11 @@ export default function ContactForm() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-clyvanta-blue-light focus:border-transparent transition-all"
             >
               <option value="">Select a service</option>
-              <option value="AI Consulting">AI Consulting</option>
-              <option value="Custom Development">Custom Development</option>
-              <option value="Process Automation">Process Automation</option>
-              <option value="Full Stack Solution">Full Stack Solution</option>
+              <option value="Web Development">Web Development</option>
+              <option value="App Development">App Development</option>
+              <option value="AI Solutions">AI Solutions</option>
+              <option value="Digital Marketing">Digital Marketing</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
