@@ -56,8 +56,8 @@ jobs:
           echo "📋 Current system status:"
           docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
           
-          echo "⬇️ Pulling complete self-contained image..."
-          docker pull vicky3074/clyvanta:latest || { echo "❌ Failed to pull Docker image"; exit 1; }
+          echo "⬇️ Pulling Docker image..."
+          docker pull vicky3074/clyvanta:main || { echo "❌ Failed to pull Docker image"; exit 1; }
           
           echo "🛑 Gracefully stopping all containers..."
           docker compose down --timeout 30 || echo "⚠️ Some containers may already be stopped"
