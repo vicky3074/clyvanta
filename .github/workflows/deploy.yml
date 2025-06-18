@@ -19,19 +19,19 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
     
-    - name: Build and Push Complete Docker Image
+    - name: Build and Push Docker Image
       run: |
-        echo "🔨 Building complete self-contained Docker image for branch: ${{ github.ref_name }}"
-        docker build -f Dockerfile.complete -t vicky3074/clyvanta-complete:${{ github.ref_name }} .
-        echo "📤 Pushing complete image to Docker Hub..."
-        docker push vicky3074/clyvanta-complete:${{ github.ref_name }}
-        echo "✅ Successfully pushed vicky3074/clyvanta-complete:${{ github.ref_name }}"
+        echo "🔨 Building Docker image for branch: ${{ github.ref_name }}"
+        docker build -f Dockerfile -t vicky3074/clyvanta:${{ github.ref_name }} .
+        echo "📤 Pushing image to Docker Hub..."
+        docker push vicky3074/clyvanta:${{ github.ref_name }}
+        echo "✅ Successfully pushed vicky3074/clyvanta:${{ github.ref_name }}"
         
         # Also tag as latest for main branch
         if [ "${{ github.ref_name }}" = "main" ]; then
-          docker tag vicky3074/clyvanta-complete:${{ github.ref_name }} vicky3074/clyvanta-complete:latest
-          docker push vicky3074/clyvanta-complete:latest
-          echo "✅ Also pushed as vicky3074/clyvanta-complete:latest"
+          docker tag vicky3074/clyvanta:${{ github.ref_name }} vicky3074/clyvanta:latest
+          docker push vicky3074/clyvanta:latest
+          echo "✅ Also pushed as vicky3074/clyvanta:latest"
         fi
         
     - name: Deploy to Production
@@ -57,10 +57,10 @@ jobs:
           docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
           
           echo "⬇️ Pulling complete self-contained image..."
-          docker pull vicky3074/clyvanta-complete:latest || { echo "❌ Failed to pull complete Docker image"; exit 1; }
+          docker pull vicky3074/clyvanta:latest || { echo "❌ Failed to pull Docker image"; exit 1; }
           
           echo "🛑 Gracefully stopping all containers..."
-          docker compose -f docker-compose.complete.yml down --timeout 30 || echo "⚠️ Some containers may already be stopped"
+          docker compose down --timeout 30 || echo "⚠️ Some containers may already be stopped"
           
           echo "🧹 Cleaning up old containers and networks..."
           docker container prune -f
@@ -70,8 +70,8 @@ jobs:
           sudo fuser -k 80/tcp 443/tcp 8080/tcp 2>/dev/null || true
           sleep 5
           
-          echo "🚀 Starting self-contained deployment..."
-          docker compose -f docker-compose.complete.yml up -d --force-recreate
+          echo "🚀 Starting multi-container deployment..."
+          docker compose up -d --force-recreate
           
           echo "⏳ Waiting for containers to initialize (60s)..."
           sleep 60
@@ -89,36 +89,38 @@ jobs:
           echo "📋 Compose project containers:"
           docker compose ps
           
-          # Find the complete container
-          COMPLETE_CONTAINER=$(docker ps --filter "label=com.docker.compose.service=clyvanta-complete" --format "{{.Names}}" | head -1)
+          # Find the web and nginx containers  
+          WEB_CONTAINER=$(docker ps --filter "label=com.docker.compose.service=clyvanta-web" --format "{{.Names}}" | head -1)
+          NGINX_CONTAINER=$(docker ps --filter "label=com.docker.compose.service=clyvanta-nginx" --format "{{.Names}}" | head -1)
           
           echo "🔍 Detected containers:"
-          echo "  Complete container: ${COMPLETE_CONTAINER:-NOT_FOUND}"
+          echo "  Web container: ${WEB_CONTAINER:-NOT_FOUND}"
+          echo "  Nginx container: ${NGINX_CONTAINER:-NOT_FOUND}"
           
-          # Verify complete container is responding (using dynamic name)
-          echo "🌐 Testing complete container health..."
-          if [ -n "$COMPLETE_CONTAINER" ]; then
+          # Verify containers are responding (multi-container setup)
+          echo "🌐 Testing multi-container health..."
+          if [ -n "$WEB_CONTAINER" ] && [ -n "$NGINX_CONTAINER" ]; then
             for i in {1..10}; do
-              echo "Attempt $i: Testing container $COMPLETE_CONTAINER..."
-              if docker exec "$COMPLETE_CONTAINER" curl -f -s --max-time 5 http://localhost:80 > /dev/null 2>&1; then
-                echo "✅ Complete container health check passed on attempt $i"
+              echo "Attempt $i: Testing web container $WEB_CONTAINER..."
+              if docker exec "$WEB_CONTAINER" curl -f -s --max-time 5 http://localhost:3000 > /dev/null 2>&1; then
+                echo "✅ Web container health check passed on attempt $i"
                 CONTAINER_HEALTHY=true
                 break
               else
-                echo "⏳ Complete container health check attempt $i/10 failed, retrying..."
+                echo "⏳ Web container health check attempt $i/10 failed, retrying..."
                 sleep 6
               fi
               
               if [ $i -eq 10 ]; then
-                echo "❌ Complete container health checks failed after 10 attempts"
-                echo "📋 Container logs:"
-                docker logs "$COMPLETE_CONTAINER" --tail 50
-                echo "📋 Container inspect:"
-                docker inspect "$COMPLETE_CONTAINER" --format '{{.State.Status}}: {{.State.Error}}'
+                echo "❌ Web container health checks failed after 10 attempts"
+                echo "📋 Web container logs:"
+                docker logs "$WEB_CONTAINER" --tail 50
+                echo "📋 Web container inspect:"
+                docker inspect "$WEB_CONTAINER" --format '{{.State.Status}}: {{.State.Error}}'
               fi
             done
           else
-            echo "❌ No complete container found - checking external access..."
+            echo "❌ Multi-container setup not found - checking external access..."
             CONTAINER_HEALTHY=false
           fi
           
@@ -150,11 +152,11 @@ jobs:
               break
             fi
             
-            # Test if complete container is directly accessible (troubleshooting)
-            if [ -n "$COMPLETE_CONTAINER" ]; then
-              CONTAINER_IP=$(docker inspect "$COMPLETE_CONTAINER" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' | head -1)
-              if [ -n "$CONTAINER_IP" ] && curl -f -s --max-time 5 "http://${CONTAINER_IP}:80" > /dev/null 2>&1; then
-                echo "✅ Complete container directly accessible at $CONTAINER_IP:80 on attempt $i"
+            # Test if nginx container is directly accessible (troubleshooting)
+            if [ -n "$NGINX_CONTAINER" ]; then
+              NGINX_IP=$(docker inspect "$NGINX_CONTAINER" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' | head -1)
+              if [ -n "$NGINX_IP" ] && curl -f -s --max-time 5 "http://${NGINX_IP}:80" > /dev/null 2>&1; then
+                echo "✅ Nginx container directly accessible at $NGINX_IP:80 on attempt $i"
                 EXTERNAL_HEALTHY=true
                 break
               fi
@@ -166,14 +168,18 @@ jobs:
           
           # Final health assessment
           if [ "$CONTAINER_HEALTHY" = "true" ] || [ "$EXTERNAL_HEALTHY" = "true" ]; then
-            echo "✅ Self-contained service is healthy (complete container working)"
+            echo "✅ Multi-container service is healthy (web + nginx working)"
           else
-            echo "❌ Self-contained service health checks failed completely"
+            echo "❌ Multi-container service health checks failed completely"
             echo "📋 Final diagnostics:"
             docker ps -a
-            if [ -n "$COMPLETE_CONTAINER" ]; then
-              echo "📋 Complete container logs:"
-              docker logs "$COMPLETE_CONTAINER" --tail 50
+            if [ -n "$WEB_CONTAINER" ]; then
+              echo "📋 Web container logs:"
+              docker logs "$WEB_CONTAINER" --tail 50
+            fi
+            if [ -n "$NGINX_CONTAINER" ]; then
+              echo "📋 Nginx container logs:"
+              docker logs "$NGINX_CONTAINER" --tail 50
             fi
             echo "📋 System resources:"
             df -h
