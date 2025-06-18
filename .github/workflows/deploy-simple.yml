@@ -1,0 +1,52 @@
+name: 🚀 Simple Production Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Deploy to DigitalOcean
+      run: |
+        echo "🚀 Starting simple deployment..."
+        
+        # Setup SSH
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+        
+        # Simple deployment
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
+          echo "📦 Deploying to production..."
+          cd clyvanta-new
+          
+          echo "📄 Pulling latest code..."
+          git pull origin main
+          
+          echo "🛑 Stopping containers..."
+          docker compose down
+          
+          echo "🚀 Starting containers..."
+          docker compose up -d --build
+          
+          echo "⏳ Waiting 30s for startup..."
+          sleep 30
+          
+          echo "🔍 Basic health check..."
+          if curl -f -s --max-time 10 http://localhost:8080 > /dev/null; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Health check failed"
+            docker ps
+            exit 1
+          fi
+        EOF
+        
+        # Cleanup
+        rm -f ~/.ssh/deploy_key
+        echo "✅ Deployment complete"
