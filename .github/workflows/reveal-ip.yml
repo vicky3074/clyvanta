@@ -1,0 +1,21 @@
+name: 🔍 Reveal Server IP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reveal:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Show Server IP
+      run: |
+        echo "🔍 Current server IP from GitHub secrets:"
+        echo "Server IP: ${{ secrets.DROPLET_IP }}"
+        
+        echo "🌐 Testing connectivity to this IP:"
+        ping -c 2 ${{ secrets.DROPLET_IP }} || echo "Ping failed (normal)"
+        
+        echo "🔑 SSH port check:"
+        nc -zv ${{ secrets.DROPLET_IP }} 22 && echo "✅ SSH accessible"
