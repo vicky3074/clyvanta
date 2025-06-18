@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Functional Tests', () => {
   
   test.beforeEach(async ({ page }) => {
-    const baseURL = process.env.CI ? 'http://localhost:3000' : 'http://localhost:8080';
-    await page.goto(baseURL);
+    // Always use Docker staging environment for consistency  
+    await page.goto('/');
   });
 
   test('Homepage loads successfully', async ({ page }) => {

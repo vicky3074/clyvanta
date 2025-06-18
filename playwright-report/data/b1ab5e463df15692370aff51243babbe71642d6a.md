@@ -1,0 +1,230 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - link "Skip to content":
+    - /url: "#main-content"
+  - link:
+    - /url: /
+    - img: Clyvanta
+  - button "Open menu"
+  - link "Our Solutions":
+    - /url: /services
+  - link "Solutions in Action":
+    - /url: /solutions-in-action
+  - link "About Us":
+    - /url: /about
+  - link "Contact":
+    - /url: /contact
+  - link "Get a Project Quote":
+    - /url: /contact
+- main:
+  - heading "Great Ideas Deserve Great Technology" [level=1]
+  - paragraph: We're the technology partner that small businesses trust to turn great ideas into great results. From custom software to AI automation, we make technology work for you, not against you.
+  - link "Get Free Consultation":
+    - /url: /#contact
+  - text: 100% Committed Direct Access Personal Touch Trusted by growing businesses across Canada to make technology simple and effective.
+  - heading "Our Core Services" [level=2]
+  - paragraph: From AI strategy to custom development, we provide end-to-end solutions that drive measurable business results.
+  - img
+  - heading "AI Solutions" [level=3]
+  - paragraph: Smart chatbots that handle customer service 24/7, automation that eliminates repetitive tasks, and intelligent analytics that predict what your customers want before they know it.
+  - link "Learn More →":
+    - /url: /services
+  - img
+  - heading "Web Development" [level=3]
+  - paragraph: Professional websites that work perfectly on all devices, load lightning-fast, and turn visitors into customers with designs that actually convert.
+  - link "Learn More →":
+    - /url: /services
+  - img
+  - heading "Mobile App Development" [level=3]
+  - paragraph: Mobile apps for iPhone and Android that your customers will love to use and that drive real business results, not just impressive demos.
+  - link "Learn More →":
+    - /url: /services
+  - img
+  - heading "Digital Marketing & SEO" [level=3]
+  - paragraph: Marketing strategies that actually work - search engine optimization that gets you found, and campaigns that bring in qualified leads who are ready to buy.
+  - link "Learn More →":
+    - /url: /services
+  - heading "Our Promise to You" [level=2]
+  - paragraph: We believe great technology should feel effortless. Here's how we make that happen.
+  - img
+  - heading "True Partnership" [level=3]
+  - paragraph: We're not just vendors—we're your technology partners. Your success directly drives our decisions.
+  - img
+  - heading "Complete Transparency" [level=3]
+  - paragraph: Fixed pricing, clear timelines, and regular updates. No surprises, no hidden costs.
+  - img
+  - heading "Practical Solutions" [level=3]
+  - paragraph: We focus on solutions that actually work in the real world, not just impressive demos.
+  - heading "See What's Possible" [level=2]
+  - paragraph: Real transformation examples across different industries
+  - text: Retail 8 weeks • Proven Results
+  - heading "E-Commerce Revolution for Local Retailer" [level=3]
+  - paragraph: Manual inventory management across multiple locations led to overselling, stockouts, and frustrated customers. No unified view of sales data or customer behavior.
+  - img
+  - text: Significant reduction in inventory costs
+  - img
+  - text: Substantial increase in online sales
+  - img
+  - text: Eliminated inventory management issues
+  - img
+  - text: Automated processes saving hours weekly
+  - img
+  - text: Proven Results Return on Investment
+  - blockquote:
+    - text: "\"This is the kind of transformation we help businesses achieve. Our approach focuses on real results that matter to your bottom line.\""
+    - strong: Real Impact
+    - text: What We Deliver
+  - button "View case study 1"
+  - button "View case study 2"
+  - button "View case study 3"
+  - heading "Why Choose Clyvanta?" [level=2]
+  - paragraph: We combine deep technical expertise with business acumen to deliver AI solutions that not only work but drive real competitive advantage for your organization.
+  - img
+  - heading "Proven Track Record" [level=3]
+  - paragraph: Quality-focused approach with deep attention to your specific business needs and measurable results.
+  - text: Quality Focus
+  - img
+  - heading "Expert Team" [level=3]
+  - paragraph: Experienced developers and consultants who understand both technology and business requirements.
+  - text: Expert Guidance
+  - img
+  - heading "Cutting-Edge Technology" [level=3]
+  - paragraph: Latest AI frameworks, cloud infrastructure, and proprietary tools for maximum performance and scalability.
+  - text: Reliable Solutions
+  - img
+  - heading "Rapid Deployment" [level=3]
+  - paragraph: Agile methodologies and pre-built components enable faster time-to-market and quicker ROI realization.
+  - text: Efficient Process
+  - img
+  - heading "Ongoing Support" [level=3]
+  - paragraph: 24/7 monitoring, continuous optimization, and dedicated support to ensure long-term success.
+  - text: 24/7 Support
+  - img
+  - heading "Enterprise Security" [level=3]
+  - paragraph: Bank-grade security, compliance with industry standards, and complete data privacy protection.
+  - text: Security Focused
+  - heading "Clyvanta vs Traditional Consulting" [level=3]
+  - heading "Traditional Consulting" [level=4]
+  - list:
+    - listitem:
+      - img
+      - text: Months to see results
+    - listitem:
+      - img
+      - text: Generic solutions
+    - listitem:
+      - img
+      - text: Limited ongoing support
+  - text: VS
+  - heading "Clyvanta" [level=4]
+  - list:
+    - listitem:
+      - img
+      - text: Results in weeks
+    - listitem:
+      - img
+      - text: Custom AI solutions
+    - listitem:
+      - img
+      - text: 24/7 support & optimization
+  - heading "Get My Free Quote" [level=2]
+  - paragraph: Ready to transform your business? Let's start with a no-pressure conversation about your needs.
+  - link "Start Your Project":
+    - /url: /contact
+  - link "Schedule a Call":
+    - /url: tel:+16479365467
+  - heading "Ready to Transform Your Business?" [level=2]
+  - paragraph: Join hundreds of companies that have accelerated their growth with Clyvanta's AI-powered solutions. Let's discuss your project today.
+  - heading "Get in Touch" [level=3]
+  - img
+  - heading "Email Us" [level=4]
+  - paragraph: hello@clyvanta.com
+  - paragraph: We typically respond within 24 hours
+  - img
+  - heading "Phone" [level=4]
+  - paragraph: +1 647 936 5467
+  - paragraph: Available during business hours
+  - img
+  - heading "Business Hours" [level=4]
+  - paragraph: "Monday - Friday: 9:00 AM - 6:00 PM EST"
+  - paragraph: Emergency support available 24/7
+  - img
+  - heading "Location" [level=4]
+  - paragraph: Toronto, ON
+  - paragraph: Serving clients globally
+  - heading "What to Expect Next" [level=4]
+  - text: 1 We'll review your project details 2 Schedule a discovery call within 24 hours 3 Receive a custom proposal and timeline
+  - heading "Let's Transform Your Business Together" [level=3]
+  - paragraph: Tell us about your project and we'll get back to you within 24 hours.
+  - text: Full Name *
+  - textbox "Full Name *"
+  - text: Email Address *
+  - textbox "Email Address *"
+  - text: Company
+  - textbox "Company"
+  - text: Phone
+  - textbox "Phone"
+  - text: Service Interest
+  - combobox "Service Interest":
+    - option "Select a service" [selected]
+    - option "AI Consulting"
+    - option "Custom Development"
+    - option "Process Automation"
+    - option "Full Stack Solution"
+  - text: Budget Range
+  - combobox "Budget Range":
+    - option "Select budget range" [selected]
+    - option "$5K - $15K"
+    - option "$15K - $50K"
+    - option "$50K - $100K"
+    - option "$100K+"
+  - text: Project Timeline
+  - combobox "Project Timeline":
+    - option "Select timeline" [selected]
+    - option "ASAP"
+    - option "1-3 months"
+    - option "3-6 months"
+    - option "6+ months"
+    - option "Just exploring"
+  - text: Project Description *
+  - textbox "Project Description *"
+  - button "Send Message"
+- contentinfo:
+  - text: Clyvanta
+  - paragraph: Transforming businesses through intelligent AI solutions and custom software development.
+  - heading "Services" [level=4]
+  - list:
+    - listitem:
+      - link "AI Consulting":
+        - /url: "#"
+    - listitem:
+      - link "Custom Development":
+        - /url: "#"
+    - listitem:
+      - link "Process Automation":
+        - /url: "#"
+  - heading "Company" [level=4]
+  - list:
+    - listitem:
+      - link "About Us":
+        - /url: "#"
+    - listitem:
+      - link "Case Studies":
+        - /url: "#"
+    - listitem:
+      - link "Blog":
+        - /url: "#"
+  - heading "Contact" [level=4]
+  - list:
+    - listitem:
+      - link "hello@clyvanta.com":
+        - /url: mailto:hello@clyvanta.com
+    - listitem:
+      - link "+1 647 936 5467":
+        - /url: tel:+16479365467
+    - listitem: Available 24/7
+  - paragraph: © 2025 Clyvanta. All rights reserved.
+- alert
+```
