@@ -1,0 +1,49 @@
+name: 🚀 Minimal Production Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Deploy to DigitalOcean
+      run: |
+        echo "🚀 Starting minimal deployment..."
+        
+        # Setup SSH
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+        
+        # Minimal deployment
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DROPLET_IP }} << 'EOF'
+          echo "📦 Deploying to production..."
+          cd clyvanta-new
+          
+          echo "📄 Pulling latest code..."
+          git pull origin main
+          
+          echo "🛑 Quick container restart..."
+          docker compose down || true
+          
+          echo "🚀 Starting containers..."
+          docker compose up -d
+          
+          echo "🔍 Quick health check..."
+          sleep 10
+          if curl -f -s --max-time 5 http://localhost:8080 > /dev/null; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Health check failed"
+            exit 1
+          fi
+        EOF
+        
+        # Cleanup
+        rm -f ~/.ssh/deploy_key
+        echo "✅ Deployment complete"
