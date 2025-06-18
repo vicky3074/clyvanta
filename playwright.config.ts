@@ -37,9 +37,9 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'docker compose up -d',
-    url: 'http://localhost:8080',
+    command: process.env.CI ? 'npm start' : 'docker compose up -d',
+    url: process.env.CI ? 'http://localhost:3000' : 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes for Docker to start
+    timeout: process.env.CI ? 60 * 1000 : 120 * 1000,
   },
 });

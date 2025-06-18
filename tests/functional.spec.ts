@@ -3,7 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Functional Tests', () => {
   
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8080');
+    const baseURL = process.env.CI ? 'http://localhost:3000' : 'http://localhost:8080';
+    await page.goto(baseURL);
   });
 
   test('Homepage loads successfully', async ({ page }) => {

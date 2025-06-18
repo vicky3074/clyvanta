@@ -3,8 +3,9 @@ import { test, expect } from '@playwright/test';
 test.describe('Mobile Responsiveness Tests', () => {
   
   test.beforeEach(async ({ page }) => {
-    // Start local staging server for testing
-    await page.goto('http://localhost:8080');
+    // Use different URL for CI vs local testing
+    const baseURL = process.env.CI ? 'http://localhost:3000' : 'http://localhost:8080';
+    await page.goto(baseURL);
   });
 
   test('Hero button does not overflow on mobile viewports', async ({ page }) => {

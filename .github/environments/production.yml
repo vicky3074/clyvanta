@@ -1,0 +1,37 @@
+# GitHub Environment Configuration for Production
+# This file documents the required environment protection rules
+# Configure these in GitHub: Settings → Environments → production
+
+environment_protection_rules:
+  # Require manual approval before production deployment
+  required_reviewers:
+    - vicky3074  # Replace with actual GitHub username
+  
+  # Deployment protection
+  deployment_branches:
+    protected_branches: true
+    custom_branch_policies: false
+  
+  # Environment secrets required
+  environment_secrets:
+    - DOCKER_USERNAME      # Docker Hub username
+    - DOCKER_PASSWORD      # Docker Hub access token  
+    - SSH_PRIVATE_KEY      # Production server SSH key
+    - DROPLET_IP          # Production server IP (138.197.169.120)
+  
+  # Wait timer (optional)
+  wait_timer: 0  # No wait timer, immediate approval prompt
+
+# Instructions for GitHub Environment Setup:
+# 1. Go to: https://github.com/vicky3074/clyvanta/settings/environments
+# 2. Click "New environment"
+# 3. Name: "production"
+# 4. Check "Required reviewers" → Add your GitHub username
+# 5. Add environment secrets listed above
+# 6. Save environment
+
+staging_environment:
+  # Staging can be automatic (no approval required)
+  environment_secrets:
+    - DOCKER_USERNAME
+    - DOCKER_PASSWORD
