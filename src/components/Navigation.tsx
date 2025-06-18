@@ -50,11 +50,19 @@ export default function Navigation({ className = '' }: NavigationProps) {
     }
   };
 
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
+
   const navLinks = [
-    { href: '/services', label: 'Our Solutions' },
     { href: '/solutions-in-action', label: 'Solutions in Action' },
     { href: '/about', label: 'About Us' },
     { href: '/contact', label: 'Contact' },
+  ];
+
+  const serviceLinks = [
+    { href: '/solutions/web-development', label: 'Web Development' },
+    { href: '/solutions/app-development', label: 'App Development' },
+    { href: '/solutions/ai-automation', label: 'AI Solutions' },
+    { href: '/solutions/digital-marketing', label: 'Digital Marketing' },
   ];
 
   return (
@@ -80,6 +88,40 @@ export default function Navigation({ className = '' }: NavigationProps) {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
+            {/* Services Dropdown */}
+            <div className="relative">
+              <button
+                onMouseEnter={() => setIsServicesOpen(true)}
+                onMouseLeave={() => setIsServicesOpen(false)}
+                className="relative text-clyvanta-text-secondary font-medium hover:text-clyvanta-blue-dark transition-colors group flex items-center"
+              >
+                Services
+                <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-clyvanta-blue-light transition-all group-hover:w-full"></span>
+              </button>
+              
+              {/* Dropdown Menu */}
+              {isServicesOpen && (
+                <div
+                  onMouseEnter={() => setIsServicesOpen(true)}
+                  onMouseLeave={() => setIsServicesOpen(false)}
+                  className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50"
+                >
+                  {serviceLinks.map((service) => (
+                    <Link
+                      key={service.href}
+                      href={service.href}
+                      className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      {service.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {navLinks.map((link) => (
               link.href.startsWith('#') ? (
                 <button
