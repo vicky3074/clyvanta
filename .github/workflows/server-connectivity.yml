@@ -6,6 +6,7 @@ on:
 jobs:
   connectivity:
     runs-on: ubuntu-latest
+    environment: production
     
     steps:
     - name: Test Server Connectivity
