@@ -143,12 +143,51 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Legacy Toronto Section for Visual Balance */}
-      <section className="py-12 bg-gray-50">
+      {/* How We Work Section */}
+      <section className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <Link href="/#contact" className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-8 py-4 rounded-full font-semibold shadow-[0_4px_15px_rgba(0,212,255,0.3)] hover:shadow-[0_6px_25px_rgba(0,212,255,0.4)] transform hover:-translate-y-0.5 transition-all duration-300 inline-block">
+              <h2 className="text-3xl font-bold text-clyvanta-text-primary mb-6">
+                How We Work With You
+              </h2>
+              <p className="text-lg text-clyvanta-text-secondary mb-6">
+                We believe technology should solve real business problems, not create new ones. Our approach is straightforward and focused on your success.
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-blue-600 text-sm font-bold">1</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-clyvanta-text-primary mb-1">Listen & Understand</h4>
+                    <p className="text-clyvanta-text-secondary">We start by understanding your business, your challenges, and your goals.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-blue-600 text-sm font-bold">2</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-clyvanta-text-primary mb-1">Design Solutions</h4>
+                    <p className="text-clyvanta-text-secondary">We create custom solutions tailored to your specific needs and budget.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-blue-600 text-sm font-bold">3</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-clyvanta-text-primary mb-1">Build & Support</h4>
+                    <p className="text-clyvanta-text-secondary">We implement your solution and provide ongoing support to ensure long-term success.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <Link href="/contact" className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-8 py-4 rounded-full font-semibold shadow-[0_4px_15px_rgba(0,212,255,0.3)] hover:shadow-[0_6px_25px_rgba(0,212,255,0.4)] transform hover:-translate-y-0.5 transition-all duration-300 inline-block">
                 <GeoText 
                   gtaText="Connect with Our Toronto Team"
                   defaultText="Start Your Project Today"
@@ -158,9 +197,46 @@ export default function AboutPage() {
             </div>
 
             <div className="relative">
-              <div className="w-full h-[400px] bg-gradient-to-br from-clyvanta-blue-light/20 to-clyvanta-orange-light/20 rounded-2xl flex items-center justify-center">
-                <div className="w-32 h-32 bg-gradient-to-br from-clyvanta-blue-light to-clyvanta-orange-light rounded-2xl flex items-center justify-center">
-                  <Logo variant="icon" size="xl" className="w-20 h-20" />
+              <div className="bg-white rounded-2xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.05)]">
+                <div className="text-center mb-6">
+                  <Logo variant="horizontal" size="lg" className="mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-clyvanta-text-primary">
+                    <GeoText 
+                      gtaText="Serving the Greater Toronto Area"
+                      defaultText="Serving Businesses Across Canada"
+                      className=""
+                    />
+                  </h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-clyvanta-text-secondary">Custom solutions built for your business</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-clyvanta-text-secondary">Fixed pricing with no hidden costs</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-clyvanta-text-secondary">Ongoing support and partnership</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-clyvanta-text-secondary">Technology that actually works</span>
+                  </div>
                 </div>
               </div>
             </div>
