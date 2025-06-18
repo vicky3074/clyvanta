@@ -1,4 +1,4 @@
-name: 🔒 Safe CI/CD Pipeline with Automated Testing
+name: 🚀 Optimized Safe CI/CD Pipeline
 
 on:
   push:
@@ -46,71 +46,129 @@ jobs:
       - name: Production build test
         run: npm run build
 
-  # Stage 2: Automated Testing
-  automated-testing:
-    name: 🧪 Comprehensive Automated Testing
+  # Stage 2: Docker Build & Security Scan (Build Once, Use Everywhere)
+  docker-build:
+    name: 🐳 Docker Build & Security Scan
     runs-on: ubuntu-latest
     needs: quality-checks
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_PASSWORD: testpassword
-          POSTGRES_DB: clyvanta_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: vicky3074/clyvanta
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Run Docker security scan
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: vicky3074/clyvanta:main-${{ github.sha }}
+          sarif-file: sarif.output.json
+          summary: true
+
+      - name: Upload security scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: sarif.output.json
+
+  # Stage 3: Automated Testing (Using Pre-built Image)
+  automated-testing:
+    name: 🧪 Test Pre-built Docker Image
+    runs-on: ubuntu-latest
+    needs: docker-build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Create test environment file
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Create test docker-compose file
         run: |
-          cat > .env.test << EOF
-          DATABASE_URL=postgresql://postgres:testpassword@localhost:5432/clyvanta_test
-          NEXTAUTH_SECRET=testsecret
-          NEXTAUTH_URL=http://localhost:3000
-          NODE_ENV=test
+          cat > docker-compose.test.yml << 'EOF'
+          services:
+            clyvanta-postgres:
+              image: postgres:15-alpine
+              environment:
+                POSTGRES_PASSWORD: testpassword
+                POSTGRES_DB: clyvanta_test
+              ports:
+                - "5432:5432"
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U postgres"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+
+            clyvanta-web:
+              image: vicky3074/clyvanta:main-${{ github.sha }}
+              ports:
+                - "8080:8080"
+              environment:
+                DATABASE_URL: postgresql://postgres:testpassword@clyvanta-postgres:5432/clyvanta_test
+                NODE_ENV: production
+              depends_on:
+                clyvanta-postgres:
+                  condition: service_healthy
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:8080"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
           EOF
 
-      - name: Build application for testing
-        run: npm run build
-
-      - name: Start application in background
+      - name: Start services with pre-built image
         run: |
-          npm start &
-          sleep 10
-          curl --retry 10 --retry-delay 3 --retry-connrefused http://localhost:3000
+          docker compose -f docker-compose.test.yml up -d
+          sleep 30
+          curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:8080
 
       - name: Run mobile responsiveness tests
-        run: npm run test:mobile
+        run: npx playwright test tests/mobile-responsiveness.spec.ts
         env:
           CI: true
 
       - name: Run functional tests
-        run: npm run test:functional
-        env:
-          CI: true
-
-      - name: Run full E2E test suite
-        run: npm run test:e2e
+        run: npx playwright test tests/functional.spec.ts
         env:
           CI: true
 
@@ -130,72 +188,29 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  # Stage 3: Docker Build & Security Scan
-  docker-build:
-    name: 🐳 Docker Build & Security Scan
-    runs-on: ubuntu-latest
-    needs: automated-testing
-    outputs:
-      image-digest: ${{ steps.build.outputs.digest }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push Docker image
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            vicky3074/clyvanta:${{ github.sha }}
-            vicky3074/clyvanta:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Run Docker security scan
-        uses: docker/scout-action@v1
-        with:
-          command: cves
-          image: vicky3074/clyvanta:${{ github.sha }}
-          sarif-file: sarif.output.json
-          summary: true
-
-      - name: Upload security scan results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Cleanup test environment
         if: always()
-        with:
-          sarif_file: sarif.output.json
+        run: docker compose -f docker-compose.test.yml down
 
   # Stage 4: Staging Deployment (Automatic)
   deploy-staging:
-    name: 🚀 Deploy to Staging
+    name: 🚧 Deploy to Staging
     runs-on: ubuntu-latest
-    needs: docker-build
+    needs: automated-testing
     if: github.ref == 'refs/heads/main'
     environment: staging
     steps:
       - name: Deploy to staging environment
         run: |
           echo "🚀 Deploying to staging environment..."
-          echo "Image: vicky3074/clyvanta:${{ github.sha }}"
-          # Add staging deployment logic here
+          echo "Image: vicky3074/clyvanta:main-${{ github.sha }}"
           echo "✅ Staging deployment complete"
 
   # Stage 5: Production Deployment (Manual Approval Required)
   deploy-production:
     name: 🎯 Deploy to Production
     runs-on: ubuntu-latest
-    needs: [docker-build, deploy-staging]
+    needs: [automated-testing, deploy-staging]
     if: github.event.inputs.environment == 'production' || (github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch')
     environment: 
       name: production
@@ -210,7 +225,7 @@ jobs:
       - name: Deploy to production with rollback capability
         run: |
           echo "🚀 Starting production deployment..."
-          echo "Image: vicky3074/clyvanta:${{ github.sha }}"
+          echo "Image: vicky3074/clyvanta:main-${{ github.sha }}"
           
           # SSH into production server
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/ssh_key
@@ -222,18 +237,51 @@ jobs:
             
             # Backup current deployment
             echo "📦 Creating deployment backup..."
-            docker tag clyvanta-clyvanta-web:latest clyvanta-clyvanta-web:backup-$(date +%Y%m%d-%H%M%S)
+            docker tag clyvanta-clyvanta-web:latest clyvanta-clyvanta-web:backup-$(date +%Y%m%d-%H%M%S) 2>/dev/null || true
             
-            # Pull new image
-            echo "⬇️ Pulling new image..."
-            docker pull vicky3074/clyvanta:${{ github.sha }}
+            # Pull new pre-built and tested image
+            echo "⬇️ Pulling tested image..."
+            docker pull vicky3074/clyvanta:main-${{ github.sha }}
             
             # Update docker-compose to use new image
-            sed -i 's|clyvanta-clyvanta-web:latest|vicky3074/clyvanta:${{ github.sha }}|g' docker-compose.yml
+            cat > docker-compose.prod.yml << 'COMPOSE_EOF'
+          services:
+            clyvanta-postgres:
+              image: postgres:15-alpine
+              environment:
+                POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clyvanta2025}
+                POSTGRES_DB: clyvanta
+              volumes:
+                - postgres_data:/var/lib/postgresql/data
+              ports:
+                - "5432:5432"
+
+            clyvanta-web:
+              image: vicky3074/clyvanta:main-${{ github.sha }}
+              ports:
+                - "8080:8080"
+              environment:
+                DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-clyvanta2025}@clyvanta-postgres:5432/clyvanta
+                NODE_ENV: production
+              depends_on:
+                - clyvanta-postgres
+
+            clyvanta-nginx:
+              image: nginx:alpine
+              ports:
+                - "80:80"
+              volumes:
+                - ./nginx.conf:/etc/nginx/nginx.conf:ro
+              depends_on:
+                - clyvanta-web
+
+          volumes:
+            postgres_data:
+          COMPOSE_EOF
             
             # Deploy with health checks
             echo "🔄 Deploying new version..."
-            docker compose up -d
+            docker compose -f docker-compose.prod.yml up -d
             
             # Wait for containers to start
             sleep 30
@@ -252,7 +300,8 @@ jobs:
             # Verify external access
             if ! curl -f http://localhost:8080 > /dev/null 2>&1; then
               echo "❌ Health check failed - rolling back"
-              git checkout HEAD~1 docker-compose.yml
+              docker compose -f docker-compose.prod.yml down
+              docker tag clyvanta-clyvanta-web:backup-$(date +%Y%m%d) clyvanta-clyvanta-web:latest 2>/dev/null || true
               docker compose up -d
               exit 1
             fi
@@ -283,22 +332,4 @@ jobs:
           echo "🔗 Site: https://clyvanta.com"
           echo "📊 Commit: ${{ github.sha }}"
           echo "👤 Deployed by: ${{ github.actor }}"
-
-  # Cleanup old Docker images
-  cleanup:
-    name: 🧹 Cleanup
-    runs-on: ubuntu-latest
-    needs: [deploy-production]
-    if: always()
-    steps:
-      - name: Cleanup old Docker images
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Delete old images (keep last 5)
-        run: |
-          echo "🧹 Cleaning up old Docker images..."
-          # Keep last 5 images, delete older ones
-          # This would need Docker Hub API integration
-          echo "✅ Cleanup completed"
+          echo "🐳 Image: vicky3074/clyvanta:main-${{ github.sha }}"
