@@ -1,7 +1,7 @@
 
 services:
   clyvanta-web:
-    image: vicky3074/clyvanta:main
+    build: .
     expose:
       - "3000"
     environment:
