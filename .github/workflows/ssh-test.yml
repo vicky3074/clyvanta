@@ -1,0 +1,28 @@
+name: 🔑 SSH Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ssh-test:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Test SSH Connection
+      run: |
+        echo "🔑 Testing SSH connection..."
+        
+        # Setup SSH
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+        
+        echo "🔍 Testing basic SSH command..."
+        # Simple command with timeout
+        timeout 30 ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@${{ secrets.DROPLET_IP }} 'echo "✅ SSH connection successful" && pwd && whoami && docker --version'
+        
+        # Cleanup
+        rm -f ~/.ssh/deploy_key
+        echo "🔑 SSH test complete"
