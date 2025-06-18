@@ -24,14 +24,9 @@ services:
     image: nginx:alpine
     ports:
       - "80:80"
-      - "443:443"
       - "8080:8080"
     volumes:
       - ./nginx.simple.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-      # SSL volumes (for future use)
-      - ssl-certs:/etc/letsencrypt:ro
-      - certbot-webroot:/var/www/certbot:ro
     restart: unless-stopped
     container_name: clyvanta-nginx
     depends_on:
@@ -57,8 +52,6 @@ services:
 
 volumes:
   postgres_data:
-  ssl-certs:
-  certbot-webroot:
 
 networks:
   clyvanta-network:
