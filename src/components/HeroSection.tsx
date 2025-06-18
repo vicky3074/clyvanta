@@ -1,5 +1,5 @@
 'use client';
-
+// Force rebuild to include analytics.ts in production bundle
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { trackBusinessEvents } from '@/lib/analytics';
