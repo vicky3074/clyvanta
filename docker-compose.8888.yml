@@ -1,0 +1,59 @@
+# Docker Compose for Port 8888 - SIT Environment (System Integration Testing)
+# AMD64 architecture with latest code - exact replica of production environment
+
+services:
+  clyvanta-web:
+    image: vicky3074/clyvanta:latest
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://clyvanta_user:clyvanta_pass@clyvanta-postgres-8888:5432/clyvanta_db
+    restart: unless-stopped
+    container_name: clyvanta-web-8888
+    depends_on:
+      - clyvanta-postgres-8888
+    networks:
+      - clyvanta-8888-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  clyvanta-nginx-8888:
+    image: nginx:alpine
+    ports:
+      - "8888:80"
+      - "8889:443"
+    volumes:
+      - ./nginx.simple.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    restart: unless-stopped
+    container_name: clyvanta-nginx-8888
+    depends_on:
+      - clyvanta-web
+    networks:
+      - clyvanta-8888-network
+
+  clyvanta-postgres-8888:
+    image: postgres:15-alpine
+    container_name: clyvanta-postgres-8888
+    environment:
+      - POSTGRES_DB=clyvanta_db
+      - POSTGRES_USER=clyvanta_user
+      - POSTGRES_PASSWORD=clyvanta_pass
+    volumes:
+      - postgres_8888_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - clyvanta-8888-network
+
+volumes:
+  postgres_8888_data:
+
+networks:
+  clyvanta-8888-network:
+    driver: bridge
