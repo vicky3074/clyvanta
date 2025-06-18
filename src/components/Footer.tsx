@@ -6,25 +6,26 @@ export default function Footer() {
           <div>
             <div className="text-3xl font-bold text-white mb-4">Clyvanta</div>
             <p className="text-gray-300">
-              Transforming businesses through intelligent AI solutions and custom software development.
+              Strategic technology partner helping small businesses grow through web development, mobile apps, AI solutions, and digital marketing.
             </p>
           </div>
           
           <div>
             <h4 className="text-white font-semibold mb-4">Services</h4>
             <ul className="space-y-2 text-gray-300">
-              <li><a href="#" className="hover:text-white transition-colors">AI Consulting</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Custom Development</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Process Automation</a></li>
+              <li><a href="/solutions/web-development" className="hover:text-white transition-colors">Web Development</a></li>
+              <li><a href="/solutions/app-development" className="hover:text-white transition-colors">App Development</a></li>
+              <li><a href="/solutions/ai-automation" className="hover:text-white transition-colors">AI Solutions</a></li>
+              <li><a href="/contact" className="hover:text-white transition-colors">Digital Marketing</a></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="text-white font-semibold mb-4">Company</h4>
+            <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-gray-300">
-              <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Case Studies</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+              <li><a href="/about" className="hover:text-white transition-colors">About Us</a></li>
+              <li><a href="/solutions-in-action" className="hover:text-white transition-colors">Our Solutions</a></li>
+              <li><a href="/contact" className="hover:text-white transition-colors">Get Started</a></li>
             </ul>
           </div>
           
@@ -41,7 +42,7 @@ export default function Footer() {
                   +1 647 936 5467
                 </a>
               </li>
-              <li>Available 24/7</li>
+              <li>Toronto, Canada</li>
             </ul>
           </div>
         </div>
