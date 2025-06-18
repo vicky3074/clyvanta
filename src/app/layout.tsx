@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { GA_TRACKING_ID } from "@/lib/analytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,8 +65,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Get GA tracking ID from environment variables
-  const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_TRACKING_ID;
+  // Enhanced GA4 setup
   const shouldLoadGA = GA_TRACKING_ID && process.env.NODE_ENV === 'production';
 
   return (
@@ -87,7 +87,14 @@ export default function RootLayout({
                   window.dataLayer = window.dataLayer || [];
                   function gtag(){dataLayer.push(arguments);}
                   gtag('js', new Date());
-                  gtag('config', '${GA_TRACKING_ID}');
+                  
+                  // Enhanced GA4 configuration
+                  gtag('config', '${GA_TRACKING_ID}', {
+                    enhanced_measurement: true,
+                    anonymize_ip: true,
+                    allow_google_signals: true,
+                    send_page_view: true
+                  });
                 `,
               }}
             />
