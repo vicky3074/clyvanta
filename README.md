@@ -1,4 +1,4 @@
-# Clyvanta - AI-Powered Business Transformation (NEW SERVER TEST)
+# Clyvanta - AI-Powered Business Transformation (DNS UPDATE TEST)
 
 🚀 **Transform your business with cutting-edge AI consulting, custom software development, and intelligent automation solutions.**
 
@@ -121,8 +121,8 @@ clyvanta/
 
 ## 🌐 Live Deployment
 
-- **Production**: http://159.203.61.237:8080
-- **Webhook API**: http://159.203.61.237:4040
+- **Production**: http://138.197.169.120:8080
+- **Webhook API**: http://138.197.169.120:4040
 
 ## 🚀 CI/CD Pipeline
 
@@ -137,7 +137,7 @@ The project uses GitHub Actions for continuous deployment:
 Manual deployment:
 ```bash
 # Deploy to production
-curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
+curl "http://138.197.169.120:4040/deploy?token=clyvanta-deploy-2025"
 ```
 
 ## 🚨 Emergency Recovery
