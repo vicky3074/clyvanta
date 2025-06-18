@@ -16,10 +16,6 @@ on:
         - staging
         - production
 
-# Environment protection
-environment:
-  name: ${{ github.event.inputs.environment || 'staging' }}
-  
 jobs:
   # Stage 1: Code Quality & Security
   quality-checks:
