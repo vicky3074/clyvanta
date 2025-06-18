@@ -72,7 +72,7 @@ export default function HeroSection() {
       <div className="absolute top-0 right-0 w-[24rem] h-[24rem] bg-gradient-to-br from-clyvanta-blue-light/20 to-clyvanta-blue-dark/20 rounded-full blur-[48px] animate-pulse"></div>
       <div className="absolute bottom-0 left-0 w-[24rem] h-[24rem] bg-gradient-to-tr from-clyvanta-orange-light/20 to-clyvanta-orange-dark/20 rounded-full blur-[48px] animate-pulse" style={{ animationDelay: '2s' }}></div>
       
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 grid lg:grid-cols-2 gap-12 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight">
             Great Ideas Deserve{' '}
@@ -89,9 +89,9 @@ export default function HeroSection() {
             <Link
               href="/#contact"
               onClick={() => trackBusinessEvents.ctaClick('consultation', 'hero')}
-              className="w-full sm:w-auto bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-4 sm:px-6 py-4 rounded-full font-semibold text-sm sm:text-base lg:text-lg shadow-[0_10px_40px_rgba(0,212,255,0.3)] hover:shadow-[0_10px_50px_rgba(0,212,255,0.4)] transform hover:-translate-y-1 transition-all duration-300 block text-center"
+              className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-6 py-4 rounded-full font-semibold text-base sm:text-lg shadow-[0_10px_40px_rgba(0,212,255,0.3)] hover:shadow-[0_10px_50px_rgba(0,212,255,0.4)] transform hover:-translate-y-1 transition-all duration-300 inline-block text-center"
             >
-              <span className="sm:hidden">Free Consultation</span>
+              <span className="sm:hidden">Get Free Consultation</span>
               <span className="hidden sm:inline">Get Free AI Consultation</span>
             </Link>
           </div>
