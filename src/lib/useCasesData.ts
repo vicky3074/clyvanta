@@ -29,19 +29,19 @@ const useCases: UseCase[] = [
     solution: "Built a custom e-commerce platform with real-time inventory sync, automated reorder points, and AI-powered demand forecasting. Integrated POS systems and created customer analytics dashboard.",
     technologies: ["Next.js", "Node.js", "PostgreSQL", "Stripe API", "Inventory Management AI", "Google Analytics"],
     outcomes: [
-      "40% reduction in inventory holding costs",
-      "65% increase in online sales within 6 months",
-      "Eliminated stockouts and overselling completely",
-      "Automated reordering saved 15 hours/week of manual work",
-      "Customer satisfaction increased from 3.2 to 4.8 stars"
+      "Significant reduction in inventory costs",
+      "Substantial increase in online sales",
+      "Eliminated inventory management issues",
+      "Automated processes saving hours weekly",
+      "Dramatically improved customer satisfaction"
     ],
     timeline: "8 weeks",
     investment: "$25,000",
-    roi: "280% in first year",
+    roi: "Proven Results",
     testimonial: {
-      quote: "Clyvanta transformed our chaotic inventory into a well-oiled machine. We're finally competing with the big players online.",
-      author: "Sarah Chen",
-      position: "Owner, Toronto Fashion Collective"
+      quote: "This is the kind of transformation we help businesses achieve. Our approach focuses on real results that matter to your bottom line.",
+      author: "Real Impact",
+      position: "What We Deliver"
     }
   },
   {
@@ -54,19 +54,19 @@ const useCases: UseCase[] = [
     solution: "Developed a comprehensive service management platform with automated scheduling, customer portal, technician mobile app, and real-time GPS tracking. Added automated follow-ups and review requests.",
     technologies: ["React Native", "Express.js", "MongoDB", "Twilio SMS", "Google Maps API", "Automated Workflows"],
     outcomes: [
-      "90% reduction in scheduling conflicts",
-      "45% increase in customer satisfaction scores",
-      "30% improvement in technician efficiency",
-      "Doubled customer retention rate",
-      "Automated follow-ups generated 200+ new reviews"
+      "Dramatic reduction in scheduling conflicts",
+      "Significant increase in customer satisfaction",
+      "Improved technician efficiency and productivity",
+      "Substantially higher customer retention",
+      "Automated follow-ups generating many new reviews"
     ],
     timeline: "10 weeks",
     investment: "$35,000",
-    roi: "320% in 18 months",
+    roi: "Significant Growth",
     testimonial: {
-      quote: "Our customers love the real-time updates and easy booking. We've gone from reactive to proactive, and it shows in our growth.",
-      author: "Mike Rodriguez",
-      position: "Founder, GTA Home Solutions"
+      quote: "Real results come from understanding your business needs and implementing solutions that actually work in the real world.",
+      author: "Proven Approach",
+      position: "Our Methodology"
     }
   },
   {
@@ -79,19 +79,19 @@ const useCases: UseCase[] = [
     solution: "Built a complete AI-powered financial planning app with user onboarding, bank integrations, machine learning recommendations, and investor dashboard. Included compliance features for financial regulations.",
     technologies: ["React", "Python/FastAPI", "PostgreSQL", "Plaid API", "OpenAI GPT", "AWS Lambda", "Compliance Tools"],
     outcomes: [
-      "MVP launched in 6 weeks",
-      "Secured $2M Series A funding",
-      "10,000+ registered users in first quarter",
-      "Featured in TechCrunch and BetaKit",
-      "95% user satisfaction rating"
+      "Rapid MVP development and launch",
+      "Successfully secured Series A funding",
+      "Strong user acquisition from launch",
+      "Positive media coverage and recognition",
+      "Excellent user satisfaction and feedback"
     ],
     timeline: "6 weeks",
     investment: "$45,000",
-    roi: "4,400% (based on valuation increase)",
+    roi: "Exceptional Value",
     testimonial: {
-      quote: "Clyvanta didn't just build our app—they built our future. Their speed and expertise were crucial to our fundraising success.",
-      author: "Alex Kim",
-      position: "Co-founder & CEO, WealthPath AI"
+      quote: "We focus on building solutions that create lasting value, whether that's through cost savings, new revenue, or competitive advantages.",
+      author: "Value Creation",
+      position: "Our Promise"
     }
   }
 ];

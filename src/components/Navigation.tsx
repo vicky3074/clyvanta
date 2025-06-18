@@ -101,9 +101,12 @@ export default function Navigation({ className = '' }: NavigationProps) {
                 </Link>
               )
             ))}
-            <button className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-8 py-3 rounded-full font-semibold shadow-[0_4px_15px_rgba(0,212,255,0.3)] hover:shadow-[0_6px_25px_rgba(0,212,255,0.4)] transform hover:-translate-y-0.5 transition-all duration-300">
+            <a
+              href="/contact"
+              className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-8 py-3 rounded-full font-semibold shadow-[0_4px_15px_rgba(0,212,255,0.3)] hover:shadow-[0_6px_25px_rgba(0,212,255,0.4)] transform hover:-translate-y-0.5 transition-all duration-300 inline-block"
+            >
               Get a Project Quote
-            </button>
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -147,12 +150,13 @@ export default function Navigation({ className = '' }: NavigationProps) {
               </Link>
             )
           ))}
-          <button 
-            className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-8 py-3 rounded-full font-semibold mt-4 w-full"
+          <a
+            href="/contact"
+            className="bg-gradient-to-r from-clyvanta-blue-light to-clyvanta-blue-dark text-white px-8 py-3 rounded-full font-semibold mt-4 w-full inline-block text-center"
             onClick={() => setIsMenuOpen(false)}
           >
             Get a Project Quote
-          </button>
+          </a>
         </div>
       </div>
 

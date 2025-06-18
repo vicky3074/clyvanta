@@ -32,7 +32,7 @@
 ```bash
 # When SSH fails, use DigitalOcean web console:
 # 1. Login to https://cloud.digitalocean.com
-# 2. Find droplet: production-server (159.203.61.237)
+# 2. Find droplet: production-server (138.197.169.120)
 # 3. Click "Console" button
 ```
 
@@ -78,7 +78,7 @@ curl http://localhost:8080
 # Expected: HTML response with Clyvanta content
 
 # Test external connectivity (from local machine)
-curl http://159.203.61.237:8080
+curl http://138.197.169.120:8080
 # Expected: Website loads normally
 ```
 
@@ -118,7 +118,7 @@ fi
 
 #### **DigitalOcean Access**
 - **Dashboard**: https://cloud.digitalocean.com
-- **Droplet**: production-server (159.203.61.237)
+- **Droplet**: production-server (138.197.169.120)
 - **Console**: Available 24/7 when SSH fails
 
 #### **Project Locations**

@@ -12,8 +12,8 @@
 - ✅ Working CI/CD pipeline with automatic deployments
 
 ### 🌐 Live URLs
-- **Production**: http://159.203.61.237:8080 (fully deployed)
-- **Staging**: http://159.203.61.237:8081 (development environment)
+- **Production**: http://138.197.169.120:8080 (fully deployed)
+- **Staging**: http://138.197.169.120:8081 (development environment)
 
 ## 📋 Next Phase Priorities
 
@@ -163,8 +163,8 @@
 
 The project has automated CI/CD:
 - Any changes committed to main branch auto-deploy
-- Staging environment for testing: http://159.203.61.237:8081
-- Production deployment: http://159.203.61.237:8080
+- Staging environment for testing: http://138.197.169.120:8081
+- Production deployment: http://138.197.169.120:8080
 - Monitor deployments: https://github.com/vicky3074/clyvanta/actions
 
 ## 🔍 References

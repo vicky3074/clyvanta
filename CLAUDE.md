@@ -3,11 +3,12 @@
 ## Project Overview
 Clyvanta is a strategic small business technology partner website built with Next.js 15, TypeScript, and Tailwind CSS. The site targets small business owners (1-50 employees) with practical technology solutions and features geo-targeting for Toronto-based visitors. It includes a complete CI/CD pipeline using GitHub Actions and webhook-based deployment to DigitalOcean.
 
-## Latest Updates (June 17, 2025)
-- Header and footer fixes deployed across all pages
-- Breadcrumb navigation removed for modern design
-- Navigation links updated to proper page routes
-- **2-Environment Architecture Implemented**: Simplified from 3-tier to reliable 2-tier setup
+## Latest Updates (June 18, 2025)
+- **NEW SERVER MIGRATION**: Successfully migrated to new DigitalOcean server (138.197.169.120)
+- **DNS UPDATE**: Updated clyvanta.com to point to new server infrastructure
+- **CI/CD VERIFICATION**: Confirmed automated deployment pipeline working on new server
+- **DOCUMENTATION UPDATE**: All references updated to new server IP
+- **ARCHITECTURE SIMPLIFIED**: Single port 8080 for both local staging and production
 
 ## 🏗️ 2-Environment Architecture (June 2025)
 
@@ -73,7 +74,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       run: |
         # Deploy using existing webhook system
-        curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
+        curl "http://138.197.169.120:4040/deploy?token=clyvanta-deploy-2025"
 ```
 
 **GitHub Secrets Configuration** (Manual - User Action Required)
@@ -87,7 +88,7 @@ Go to https://github.com/vicky3074/clyvanta/settings/secrets/actions and add:
 
 2. **Server Credentials (should exist from previous setup):**
    - `SSH_PRIVATE_KEY`: [Your DigitalOcean SSH private key]
-   - `DROPLET_IP`: `159.203.61.237`
+   - `DROPLET_IP`: `138.197.169.120`
 
 **To create Docker Hub Access Token:**
 1. Go to https://hub.docker.com/settings/security
@@ -221,7 +222,7 @@ services:
 **EMERGENCY RECOVERY PROCEDURE:**
 1. **Access DigitalOcean Console** (bypasses SSH issues)
    - Login to https://cloud.digitalocean.com
-   - Find droplet with IP 159.203.61.237
+   - Find droplet with IP 138.197.169.120
    - Click "Console" to access server directly
 
 2. **Check Container Status**
@@ -320,8 +321,8 @@ services:
 - Add analytics integration
 
 ## 🌐 Live URLs
-- **Production**: http://159.203.61.237:8080
-- **Webhook API**: http://159.203.61.237:4040
+- **Production**: http://138.197.169.120:8080
+- **Webhook API**: http://138.197.169.120:4040
 
 ## 🛠️ Tech Stack
 - **Framework**: Next.js 15 with App Router
@@ -417,7 +418,7 @@ docker-compose up -d --build
 - Health check validation before deployment
 - Automatic service monitoring
 ```bash
-curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
+curl "http://138.197.169.120:4040/deploy?token=clyvanta-deploy-2025"
 ```
 
 #### **Fallback: SSH Deployment** 
@@ -429,13 +430,13 @@ curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
 ### Manual Deployment Options
 ```bash
 # Health check first
-curl "http://159.203.61.237:4040/health"
+curl "http://138.197.169.120:4040/health"
 
 # Deploy via webhook (if healthy)
-curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
+curl "http://138.197.169.120:4040/deploy?token=clyvanta-deploy-2025"
 
 # Cleanup backups if needed
-curl "http://159.203.61.237:4040/cleanup?token=clyvanta-deploy-2025"
+curl "http://138.197.169.120:4040/cleanup?token=clyvanta-deploy-2025"
 ```
 
 ## 📊 GitHub Actions Workflow

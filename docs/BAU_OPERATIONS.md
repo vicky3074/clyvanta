@@ -98,7 +98,7 @@ sudo sshd -T | grep -E "(PermitRootLogin|PasswordAuthentication|PubkeyAuthentica
 ### **Morning Check (5 minutes)**
 ```bash
 # 1. Verify website is up
-curl -I http://159.203.61.237:8080
+curl -I http://138.197.169.120:8080
 
 # 2. Check recent deployments
 gh run list --limit 3
@@ -140,7 +140,7 @@ git push origin main
 gh run watch --exit-status
 
 # Method 2: Manual webhook (when GitHub Actions fails)
-curl "http://159.203.61.237:4040/deploy?token=clyvanta-deploy-2025"
+curl "http://138.197.169.120:4040/deploy?token=clyvanta-deploy-2025"
 
 # Method 3: Console access (when SSH fails)
 # Use DigitalOcean Console → docker compose up -d
@@ -169,8 +169,8 @@ curl http://localhost:8080
 gh run cancel [run-id]
 
 # 2. Check server connectivity
-ping 159.203.61.237
-nc -z 159.203.61.237 22
+ping 138.197.169.120
+nc -z 138.197.169.120 22
 
 # 3. Use console access if SSH fails
 # DigitalOcean Console → su - ubuntu → cd clyvanta-new
@@ -217,13 +217,13 @@ docker compose restart
 ## 📞 **Emergency Contacts**
 
 ### **Access Methods (Priority Order)**
-1. **SSH**: `ssh ubuntu@159.203.61.237` (if working)
+1. **SSH**: `ssh ubuntu@138.197.169.120` (if working)
 2. **DigitalOcean Console**: https://cloud.digitalocean.com
 3. **GitHub Actions**: Webhook deployment
 4. **Local Access**: This documentation
 
 ### **Quick Reference**
-- **Server IP**: 159.203.61.237
+- **Server IP**: 138.197.169.120
 - **Project Path**: /home/ubuntu/clyvanta-new
 - **Recovery Command**: `docker compose up -d`
 - **Health Check**: `curl http://localhost:8080`

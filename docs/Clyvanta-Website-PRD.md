@@ -78,7 +78,7 @@ Create a professional, high-converting website for Clyvanta, a Toronto-based tec
 - **Accessibility**: WCAG 2.1 AA compliance
 
 ### 4.3 Infrastructure
-- **Hosting**: DigitalOcean droplet (159.203.61.237)
+- **Hosting**: DigitalOcean droplet (138.197.169.120)
 - **Containerization**: Docker
 - **Environments**: Production (port 5000), Development (port 5001)
 - **CI/CD**: GitHub Actions with HCP Vault secrets

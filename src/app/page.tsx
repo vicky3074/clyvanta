@@ -1,10 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import ServicesSection from '@/components/ServicesSection';
 import WhyChooseSection from '@/components/WhyChooseSection';
-import TrustSection from '@/components/TrustSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import GeoText from '@/components/GeoText';
@@ -14,7 +14,29 @@ import ErrorBoundary, { ServiceErrorFallback, ContactFormErrorFallback } from '@
 
 export default function Home() {
   const useCases = getAllUseCases();
-  const featuredUseCase = useCases[0]; // Online Retailer case
+  const [currentUseCase, setCurrentUseCase] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  
+  // Auto-advance carousel
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+    
+    const interval = setInterval(() => {
+      setCurrentUseCase((prev) => (prev + 1) % useCases.length);
+    }, 6000); // Change every 6 seconds
+    
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, useCases.length]);
+  
+  const currentCase = useCases[currentUseCase];
+  
+  const goToPrevious = () => {
+    setCurrentUseCase((prev) => (prev === 0 ? useCases.length - 1 : prev - 1));
+  };
+  
+  const goToNext = () => {
+    setCurrentUseCase((prev) => (prev + 1) % useCases.length);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -96,82 +118,116 @@ export default function Home() {
           </section>
         </ErrorBoundary>
 
-        {/* Featured Use Case Section */}
+        {/* Use Cases Carousel Section */}
         <ErrorBoundary>
-          <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+          <section 
+            className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50"
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
+          >
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                   See What's Possible
                 </h2>
                 <p className="text-xl text-gray-600">
-                  Real transformation from a real business partnership
+                  Real transformation examples across different industries
                 </p>
               </div>
               
-              {featuredUseCase && (
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden lg:flex lg:items-center">
-                  {/* Content */}
-                  <div className="p-8 lg:p-12 lg:flex-1">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                        {featuredUseCase.industry}
-                      </span>
-                      <span className="text-gray-500 text-sm">
-                        {featuredUseCase.timeline} • {featuredUseCase.roi} ROI
-                      </span>
+              {currentCase && (
+                <div className="relative">
+                  {/* Navigation Arrows */}
+                  <button
+                    onClick={goToPrevious}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden lg:flex items-center justify-center w-12 h-12 bg-white/90 hover:bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+                    aria-label="Previous case study"
+                  >
+                    <svg className="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  
+                  <button
+                    onClick={goToNext}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden lg:flex items-center justify-center w-12 h-12 bg-white/90 hover:bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+                    aria-label="Next case study"
+                  >
+                    <svg className="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  
+                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden lg:flex lg:items-center transition-all duration-500">
+                    {/* Content */}
+                    <div className="p-8 lg:p-12 lg:flex-1">
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                          {currentCase.industry}
+                        </span>
+                        <span className="text-gray-500 text-sm">
+                          {currentCase.timeline} • {currentCase.roi}
+                        </span>
+                      </div>
+                      
+                      <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
+                        {currentCase.title}
+                      </h3>
+                      
+                      <p className="text-gray-600 mb-6 leading-relaxed">
+                        {currentCase.problem}
+                      </p>
+                      
+                      <div className="grid sm:grid-cols-2 gap-4 mb-6">
+                        {currentCase.outcomes.slice(0, 4).map((outcome, index) => (
+                          <div key={index} className="flex items-start gap-2">
+                            <svg className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="text-sm text-gray-700">{outcome}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
                     </div>
                     
-                    <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
-                      {featuredUseCase.title}
-                    </h3>
-                    
-                    <p className="text-gray-600 mb-6 leading-relaxed">
-                      {featuredUseCase.problem}
-                    </p>
-                    
-                    <div className="grid sm:grid-cols-2 gap-4 mb-6">
-                      {featuredUseCase.outcomes.slice(0, 4).map((outcome, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <svg className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-sm text-gray-700">{outcome}</span>
-                        </div>
-                      ))}
+                    {/* Metrics */}
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 lg:w-80">
+                      <div className="text-center mb-6">
+                        <svg className="h-12 w-12 text-blue-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        <div className="text-3xl font-bold text-gray-900">{currentCase.roi}</div>
+                        <div className="text-gray-600">Return on Investment</div>
+                      </div>
+                      
+                      {currentCase.testimonial && (
+                        <blockquote className="text-gray-700 italic text-center">
+                          "{currentCase.testimonial.quote}"
+                          <footer className="mt-3 text-sm">
+                            <strong>{currentCase.testimonial.author}</strong>
+                            <br />
+                            {currentCase.testimonial.position}
+                          </footer>
+                        </blockquote>
+                      )}
                     </div>
-                    
-                    <a
-                      href="/solutions-in-action"
-                      className="inline-flex items-center text-blue-600 font-semibold hover:text-blue-700"
-                    >
-                      See all success stories
-                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </a>
                   </div>
                   
-                  {/* Metrics */}
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 lg:w-80">
-                    <div className="text-center mb-6">
-                      <svg className="h-12 w-12 text-blue-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                      <div className="text-3xl font-bold text-gray-900">{featuredUseCase.roi}</div>
-                      <div className="text-gray-600">Return on Investment</div>
-                    </div>
-                    
-                    {featuredUseCase.testimonial && (
-                      <blockquote className="text-gray-700 italic text-center">
-                        "{featuredUseCase.testimonial.quote}"
-                        <footer className="mt-3 text-sm">
-                          <strong>{featuredUseCase.testimonial.author}</strong>
-                          <br />
-                          {featuredUseCase.testimonial.position}
-                        </footer>
-                      </blockquote>
-                    )}
+                  {/* Carousel Navigation Dots */}
+                  <div className="flex justify-center mt-8 space-x-3">
+                    {useCases.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentUseCase(index)}
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          index === currentUseCase 
+                            ? 'bg-blue-600 scale-125' 
+                            : 'bg-gray-300 hover:bg-gray-400'
+                        }`}
+                        aria-label={`View case study ${index + 1}`}
+                      />
+                    ))}
                   </div>
                 </div>
               )}
@@ -183,9 +239,6 @@ export default function Home() {
           <WhyChooseSection />
         </ErrorBoundary>
 
-        <ErrorBoundary>
-          <TrustSection />
-        </ErrorBoundary>
 
         {/* Final CTA Section */}
         <ErrorBoundary>

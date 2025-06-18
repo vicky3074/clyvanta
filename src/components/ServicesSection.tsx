@@ -3,21 +3,21 @@ import Link from 'next/link';
 export default function ServicesSection() {
   const services = [
     {
-      title: 'AI Chatbots & Virtual Assistants',
-      description: 'Intelligent conversational AI that handles customer service, sales inquiries, and internal support 24/7 with human-like responses.',
+      title: 'AI Solutions',
+      description: 'Smart chatbots that handle customer service 24/7, automation that eliminates repetitive tasks, and intelligent analytics that predict what your customers want before they know it.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
       ),
       gradient: 'from-clyvanta-blue-light to-clyvanta-blue-dark',
-      href: '/services/ai-chatbots',
+      href: '/services/ai-solutions',
       stats: '75% cost reduction',
       category: 'AI'
     },
     {
-      title: 'Custom Web Development',
-      description: 'Enterprise-grade web applications built with modern frameworks, responsive design, and optimized for performance and scalability.',
+      title: 'Web Development',
+      description: 'Professional websites that work perfectly on all devices, load lightning-fast, and turn visitors into customers with designs that actually convert.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -30,7 +30,7 @@ export default function ServicesSection() {
     },
     {
       title: 'Mobile App Development',
-      description: 'Native iOS and Android applications with seamless user experiences, advanced features, and cross-platform compatibility.',
+      description: 'Mobile apps for iPhone and Android that your customers will love to use and that drive real business results, not just impressive demos.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -42,21 +42,8 @@ export default function ServicesSection() {
       category: 'Development'
     },
     {
-      title: 'Predictive Analytics & ML',
-      description: 'Advanced machine learning models that forecast trends, predict customer behavior, and optimize business operations.',
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
-      gradient: 'from-purple-500 to-indigo-600',
-      href: '/services/predictive-analytics',
-      stats: '90% accuracy rates',
-      category: 'AI'
-    },
-    {
       title: 'Digital Marketing & SEO',
-      description: 'Data-driven marketing strategies, search engine optimization, and AI-powered campaigns that drive qualified leads and conversions.',
+      description: 'Marketing strategies that actually work - search engine optimization that gets you found, and campaigns that bring in qualified leads who are ready to buy.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -66,60 +53,6 @@ export default function ServicesSection() {
       href: '/services/digital-marketing',
       stats: '300% ROI average',
       category: 'Marketing'
-    },
-    {
-      title: 'Process Automation (RPA)',
-      description: 'Intelligent automation of repetitive tasks, data entry, and workflow optimization using AI-powered bots.',
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-      gradient: 'from-pink-500 to-rose-600',
-      href: '/services/rpa',
-      stats: '80% time savings',
-      category: 'AI'
-    },
-    {
-      title: 'Cloud Solutions & DevOps',
-      description: 'Scalable cloud infrastructure, containerization, CI/CD pipelines, and secure deployment strategies for enterprise applications.',
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-        </svg>
-      ),
-      gradient: 'from-cyan-500 to-blue-600',
-      href: '/services/cloud-solutions',
-      stats: '99.9% uptime',
-      category: 'Development'
-    },
-    {
-      title: 'Computer Vision & OCR',
-      description: 'AI-powered image recognition, document processing, and visual inspection systems for automated quality control.',
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-      ),
-      gradient: 'from-amber-500 to-orange-600',
-      href: '/services/computer-vision',
-      stats: '99% detection accuracy',
-      category: 'AI'
-    },
-    {
-      title: 'E-commerce Solutions',
-      description: 'Complete online stores with payment processing, inventory management, AI recommendations, and conversion optimization.',
-      icon: (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-        </svg>
-      ),
-      gradient: 'from-emerald-500 to-teal-600',
-      href: '/services/ecommerce',
-      stats: '65% sales increase',
-      category: 'Development'
     }
   ];
 
@@ -136,7 +69,7 @@ export default function ServicesSection() {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {services.map((service, index) => (
             <div 
               key={index}
@@ -157,11 +90,6 @@ export default function ServicesSection() {
                 {service.description}
               </p>
 
-              {/* Stats */}
-              <div className="bg-gradient-to-r from-clyvanta-bg-light to-white p-3 rounded-lg mb-6 border border-clyvanta-blue-light/10">
-                <div className="text-sm font-semibold text-clyvanta-blue-dark mb-1">Typical Results:</div>
-                <div className="text-lg font-bold text-clyvanta-text-primary">{service.stats}</div>
-              </div>
               
               <Link 
                 href="/services"

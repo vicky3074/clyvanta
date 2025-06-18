@@ -160,7 +160,7 @@ Previous Version (Blue)       Current Production (Green)
 ### Health Check Endpoints
 - **Primary:** `https://clyvanta.com/`
 - **Health API:** `https://clyvanta.com/health`
-- **Direct:** `http://159.203.61.237:8080`
+- **Direct:** `http://138.197.169.120:8080`
 
 ### Validation Criteria
 - ✅ HTTP 200 response
@@ -194,7 +194,7 @@ Edit `deployment.config.yml` for:
 2. **Manual:** Run emergency rollback workflow
 3. **SSH Manual:** 
    ```bash
-   ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@159.203.61.237
+   ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@138.197.169.120
    cd /home/ubuntu/backups
    # Restore from latest backup
    ```
@@ -253,7 +253,7 @@ Edit `deployment.config.yml` for:
 curl -I https://clyvanta.com
 
 # Server diagnostics
-ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@159.203.61.237 "docker ps && docker logs clyvanta-nginx --tail 20"
+ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@138.197.169.120 "docker ps && docker logs clyvanta-nginx --tail 20"
 ```
 
 ## 🎯 Best Practices

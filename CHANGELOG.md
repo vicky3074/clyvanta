@@ -77,6 +77,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Infrastructure
 - DigitalOcean deployment setup
-- Production URL: http://159.203.61.237:8080
-- Staging URL: http://159.203.61.237:8081
-- Webhook API: http://159.203.61.237:4040
+- Production URL: http://138.197.169.120:8080
+- Staging URL: http://138.197.169.120:8081
+- Webhook API: http://138.197.169.120:4040
