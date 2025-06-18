@@ -1,0 +1,43 @@
+name: 🌐 Check Server Status
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Check Server Status
+      run: |
+        echo "🌐 Checking if your application is already running..."
+        
+        echo "🔍 Testing HTTP access to your server..."
+        if curl -f -s --max-time 10 "http://${{ secrets.DROPLET_IP }}:8080" > /tmp/response.html; then
+          echo "✅ Server is responding on port 8080!"
+          echo "📄 Response preview (first 200 chars):"
+          head -c 200 /tmp/response.html
+          echo ""
+          echo "🎉 Your application is already running - no deployment needed!"
+        else
+          echo "❌ Server not responding on port 8080"
+        fi
+        
+        echo "🔍 Testing port 80..."
+        if curl -f -s --max-time 10 "http://${{ secrets.DROPLET_IP }}:80" > /tmp/response80.html; then
+          echo "✅ Server is responding on port 80!"
+          echo "📄 Response preview (first 200 chars):"
+          head -c 200 /tmp/response80.html
+        else
+          echo "❌ Server not responding on port 80"
+        fi
+        
+        echo "🌍 Testing domain (if configured)..."
+        if curl -f -s --max-time 10 "https://clyvanta.com" > /tmp/domain.html; then
+          echo "✅ Domain is working!"
+          echo "📄 Domain response preview:"
+          head -c 200 /tmp/domain.html
+        else
+          echo "❌ Domain not responding"
+        fi
