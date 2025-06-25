@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createLead } from '@/lib/database';
-import { createLeadInFile } from '@/lib/fileStorage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,40 +22,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare lead data
-    const leadData = {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      company: body.company?.trim() || null,
-      phone: body.phone?.trim() || null,
-      message: message.trim(),
-      service_interest: body.serviceInterest || null,
-      budget_range: body.budgetRange || null,
-      timeline: body.timeline || null,
-    };
+    // Prepare form data for CRM API
+    const formData = new URLSearchParams();
+    formData.append('token', 'clyvanta2025api');
+    formData.append('name', name.trim());
+    formData.append('email', email.trim().toLowerCase());
+    formData.append('message', message.trim());
+    
+    // Add optional fields if provided
+    if (body.company?.trim()) {
+      formData.append('company', body.company.trim());
+    }
+    if (body.phone?.trim()) {
+      formData.append('phone', body.phone.trim());
+    }
+    if (body.serviceInterest) {
+      formData.append('serviceInterest', body.serviceInterest);
+    }
+    if (body.budgetRange) {
+      formData.append('budgetRange', body.budgetRange);
+    }
+    if (body.timeline) {
+      formData.append('timeline', body.timeline);
+    }
 
-    // Try database first, fallback to file storage
-    let newLead;
-    try {
-      newLead = await createLead(leadData);
-    } catch {
-      console.log('Database unavailable, using file storage fallback');
-      newLead = await createLeadInFile(leadData);
+    // Submit to CRM API
+    const crmResponse = await fetch('https://crm.clyvanta.com/clyvanta-api.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
+
+    if (!crmResponse.ok) {
+      throw new Error(`CRM API error: ${crmResponse.status}`);
+    }
+
+    const crmResult = await crmResponse.json();
+    
+    if (!crmResult.success) {
+      throw new Error(crmResult.error || 'CRM API returned error');
     }
 
     // Log the successful submission (for monitoring)
-    console.log('New lead created:', {
-      id: newLead.id,
-      email: newLead.email,
-      service_interest: newLead.service_interest,
-      created_at: newLead.created_at
+    console.log('Lead successfully submitted to CRM:', {
+      leadId: crmResult.lead_id,
+      email: email.trim().toLowerCase(),
+      serviceInterest: body.serviceInterest,
+      operation: crmResult.operation
     });
 
     // Return success response
     return NextResponse.json(
       { 
         message: 'Thank you! Your message has been received successfully.',
-        leadId: newLead.id 
+        leadId: crmResult.lead_id 
       },
       { status: 201 }
     );

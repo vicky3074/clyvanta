@@ -3,17 +3,21 @@
 ## Project Overview
 Clyvanta is a strategic small business technology partner website built with Next.js 15, TypeScript, and Tailwind CSS. The site targets small business owners (1-50 employees) with practical technology solutions and features geo-targeting for Toronto-based visitors.
 
-## 🚨 CRITICAL INFRASTRUCTURE SETUP (June 18, 2025)
+## 🚨 CRITICAL INFRASTRUCTURE SETUP (June 20, 2025)
 
 ### **Environment Architecture**
 - **Local Staging**: http://localhost:8080 (Docker - EXACT production replica)
 - **Production**: https://clyvanta.com (DigitalOcean server: 138.197.169.120)
+- **CRM System**: https://crm.clyvanta.com (Oracle Cloud server: 40.233.84.47)
 - **Git**: GitHub repository with automated CI/CD (DISABLED for stability)
 
 ### **SSH Access Configuration**
 ```bash
-# Claude has SSH access with this key:
+# Website SSH (DigitalOcean):
 ssh -i ~/.ssh/clyvanta_deploy_new ubuntu@138.197.169.120
+
+# CRM SSH (Oracle Cloud):
+ssh -i "/Users/vicky/Desktop/Vicky/Oracle/40.233.84.47/ssh-key-2025-06-20-4.key" ubuntu@40.233.84.47
 
 # NEVER ask user to manually SSH - Claude can do it directly
 ```
@@ -336,12 +340,28 @@ Clyvanta brand colors and styling in `tailwind.config.ts`:
 - **Storage**: File-based fallback system
 - **Features**: Lead management, status tracking, real-time updates
 
+## 🔗 CRM Integration (June 20, 2025)
+
+### **Perfex CRM Setup**
+- **Version**: v3.1.6
+- **URL**: https://crm.clyvanta.com
+- **Admin Login**: vicky3074@yahoo.com / admin123
+- **Database**: perfex_crm (MySQL)
+- **Documentation**: See `CRM_SETUP.md` for complete details
+
+### **Web-to-Lead Integration**
+- **Objective**: Connect website contact forms to CRM
+- **Landing Pages**: 2 additional landing pages planned
+- **Integration**: Use Perfex CRM's web-to-lead functionality
+
 ## 💡 Next Steps for Improvement
-1. **Performance Optimization**: Image optimization, lazy loading
-2. **User Experience**: Smooth animations, better mobile UX
-3. **Content Management**: Dynamic content system
-4. **Analytics**: User behavior tracking
-5. **SEO Enhancement**: Better meta tags and structured data
+1. **CRM Integration**: Connect website contact forms to Perfex CRM
+2. **Landing Pages**: Create 2 additional landing pages for lead capture
+3. **Performance Optimization**: Image optimization, lazy loading
+4. **User Experience**: Smooth animations, better mobile UX
+5. **Content Management**: Dynamic content system
+6. **Analytics**: User behavior tracking
+7. **SEO Enhancement**: Better meta tags and structured data
 
 ## 🚨 Common Issues & Solutions
 

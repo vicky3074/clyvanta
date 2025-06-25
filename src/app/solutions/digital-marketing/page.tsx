@@ -20,7 +20,7 @@ export default function DigitalMarketingPage() {
             Digital Marketing Services
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Strategic digital marketing solutions that drive real growth for <GeoText torontoText="Toronto" defaultText="small" /> businesses. 
+            Strategic digital marketing solutions that drive real growth for <GeoText gtaText="Toronto" defaultText="local" /> businesses. 
             From SEO to social media, we help you reach your ideal customers online.
           </p>
         </div>
@@ -59,7 +59,7 @@ export default function DigitalMarketingPage() {
                   <li>• Keyword research and strategy</li>
                   <li>• On-page optimization</li>
                   <li>• Technical SEO improvements</li>
-                  <li>• Local SEO for <GeoText torontoText="Toronto businesses" defaultText="local businesses" /></li>
+                  <li>• Local SEO for <GeoText gtaText="Toronto businesses" defaultText="local businesses" /></li>
                   <li>• Content optimization</li>
                   <li>• Performance tracking and reporting</li>
                 </ul>
@@ -204,7 +204,7 @@ export default function DigitalMarketingPage() {
             Ready to Grow Your Business Online?
           </h2>
           <p className="text-xl text-purple-100 mb-8">
-            Let's create a digital marketing strategy that drives real results for your <GeoText torontoText="Toronto" defaultText="" /> business.
+            Let's create a digital marketing strategy that drives real results for your <GeoText gtaText="Toronto" defaultText="local" /> business.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
